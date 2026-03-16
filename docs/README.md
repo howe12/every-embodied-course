@@ -20,6 +20,43 @@
   </p>
 </div>
 
+---
+
+## 📖 阅读指南
+
+### 如何开始学习
+
+1. **环境准备**
+   - 安装 Ubuntu 20.04/22.04 系统
+   - 安装 ROS2 (推荐 Humble 版本)
+   - 配置开发环境
+
+2. **学习顺序**
+   - 建议按目录顺序学习：从01到02
+   - 每个章节配有代码示例和实践项目
+   - 学完即可动手实践
+
+3. **代码获取**
+   ```bash
+   git clone https://github.com/howe12/every-embodied-course.git
+   cd every-embodied-course/docs
+   ```
+
+### 章节速览
+
+| 章节 | 内容 | 难度 |
+| :--- | :--- | :--- |
+| 01-具身智能概述 | 机器人基础、ROS发展、Linux基础 | ⭐ 入门 |
+| 02-机器人基础和控制 | ROS2工作空间、Colcon、开发工具 | ⭐⭐ 进阶 |
+
+### 配套资源
+
+- 🐢 [turtlesim仿真](https://github.com/ros/ros_tutorials) - 入门练习
+- 📚 [ROS2官方文档](https://docs.ros.org/en/humble/) - 权威参考
+- 💻 [本课程GitHub](https://github.com/howe12/every-embodied-course) - 获取源码
+
+---
+
 ## 🚀 快速开始
 
 ```bash
@@ -35,6 +72,8 @@ sudo apt install ros-humble-desktop
 ros2 run turtlesim turtlesim_node
 ```
 
+---
+
 ## 📚 课程简介
 
 本课程是 [every-embodied](https://github.com/datawhalechina/every-embodied) 的ROS2机器人仿真子课程，系统学习ROS2机器人仿真技术，从基础入门到实践项目。
@@ -42,17 +81,6 @@ ros2 run turtlesim turtlesim_node
 - **入门友好**：从零开始，无需ROS1基础
 - **实践导向**：强调"跑起来-看结果-再理解原理"的学习路径
 - **循序渐进**：从环境搭建到机器人控制，逐步深入
-
----
-
-## 📖 学习路径
-
-本教程分为两个阶段，带你逐层深入ROS2机器人仿真：
-
-| 阶段 | 核心技能 | 产出 |
-| :--- | :--- | :--- |
-| **第一阶段** | 机器人基础、ROS2入门、Linux操作 | 搭建ROS2开发环境、掌握基础命令 |
-| **第二阶段** | 工作空间、构建工具、常用工具 | 独立开发ROS2功能包、完成项目 |
 
 ---
 
