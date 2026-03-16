@@ -124,8 +124,8 @@
       margin-top: 10px;
     }
     
-    .toc-right .toc-h2 a {
-      font-size: 13px;
+    .toc-right .toc-h2:first-child {
+      margin-top: 0;
     }
     
     .toc-right .toc-h3 {
@@ -148,7 +148,7 @@
   <div id="app">加载中...</div>
   
   <!-- 右侧TOC容器 -->
-  <div class="toc-right" id="toc-container">
+  <div class="toc-right" id="toc-container" style="display:none;">
     <h3>📑 文章目录</h3>
     <div id="toc-list"></div>
   </div>
@@ -164,44 +164,56 @@
         maxAge: 86400000, 
         placeholder: '🔍 搜索...',
         noData: '❌ 未找到结果'
-      },
-      // 生成TOC
-      toc: {
-        tocLevel1: true,
-        tocLevel2: true, 
-        tocLevel3: true,
-        scope: '.markdown-section',
-        heading: 'h2, h3'
       }
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-toc@1.1.0/dist/docsify-toc.min.js"></script>
   
   <script>
-    // 手动生成TOC
+    // 生成TOC
     function generateTOC() {
-      const headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
-      const tocList = document.getElementById('toc-list');
-      if (!tocList || !headings.length) return;
-      
-      let html = '<ul>';
-      headings.forEach((heading, index) => {
-        const id = 'toc-' + index;
-        heading.id = id;
-        const level = heading.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
-        const text = heading.textContent;
-        html += `<li class="${level}"><a href="#${id}">${text}</a></li>`;
-      });
-      html += '</ul>';
-      tocList.innerHTML = html;
+      setTimeout(function() {
+        const tocContainer = document.getElementById('toc-container');
+        const tocList = document.getElementById('toc-list');
+        
+        if (!tocContainer || !tocList) {
+          console.log('TOC container not found');
+          return;
+        }
+        
+        // 查找所有h2和h3标题
+        const headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
+        console.log('Found headings:', headings.length);
+        
+        if (headings.length === 0) {
+          tocContainer.style.display = 'none';
+          return;
+        }
+        
+        let html = '<ul>';
+        headings.forEach((heading, index) => {
+          const id = 'heading-' + index;
+          heading.id = id;
+          const level = heading.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
+          const text = heading.textContent.trim();
+          if (text) {
+            html += `<li class="${level}"><a href="#${id}">${text}</a></li>`;
+          }
+        });
+        html += '</ul>';
+        
+        tocList.innerHTML = html;
+        tocContainer.style.display = 'block';
+        console.log('TOC generated');
+      }, 500); // 延迟500ms确保页面加载完成
     }
     
     // 页面加载后生成TOC
     document.addEventListener('DOMContentLoaded', generateTOC);
-    window.$docsify = window.$docsify || {};
-    window.$docsify.onReady = generateTOC;
+    
+    // docsify加载完成后也生成
+    window.onload = generateTOC;
   </script>
 </body>
 </html>
