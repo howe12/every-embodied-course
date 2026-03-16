@@ -162,7 +162,10 @@
       if (!content) return;
       
       var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
-      if (headings.length === 0) return;
+      if (headings.length === 0) {
+        content.innerHTML = '<p style="color:#999;font-size:12px;">暂无目录</p>';
+        return;
+      }
       
       var html = '<ul>';
       
@@ -180,7 +183,6 @@
         } else if (h.id) {
           anchorId = h.id;
         } else {
-          // 生成slugify ID
           anchorId = slugify(text);
           h.id = anchorId;
         }
@@ -192,13 +194,27 @@
       content.innerHTML = html;
     }
     
-    // 延迟执行确保docsify渲染完成
-    setTimeout(initTOC, 1000);
+    // 监听docsify路由变化
+    function setupListeners() {
+      // 初始加载
+      setTimeout(initTOC, 800);
+      
+      // 监听hash变化（页面切换）
+      window.addEventListener('hashchange', function() {
+        setTimeout(initTOC, 800);
+      });
+      
+      // 监听popstate
+      window.addEventListener('popstate', function() {
+        setTimeout(initTOC, 800);
+      });
+    }
     
-    // 监听路由变化
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(initTOC, 1000);
-    });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupListeners);
+    } else {
+      setupListeners();
+    }
   </script>
 </body>
 </html>
