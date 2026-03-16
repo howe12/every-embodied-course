@@ -148,57 +148,56 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   
   <script>
-    // 等待docsify渲染完成后生成TOC
-    function initTOC() {
-      var checkCount = 0;
-      var maxChecks = 20;
-      
-      function check() {
-        checkCount++;
-        var content = document.getElementById('toc-content');
-        var section = document.querySelector('.markdown-section');
-        
-        if (!content) return;
-        
-        // 查找所有h2, h3标题
-        var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
-        
-        if (headings.length === 0 && checkCount < maxChecks) {
-          setTimeout(check, 300);
-          return;
-        }
-        
-        var html = '<ul>';
-        headings.forEach(function(h, i) {
-          var tag = h.tagName.toLowerCase();
-          var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
-          var text = h.textContent.trim();
-          
-          // 确保有id
-          if (!h.id) {
-            h.id = 'section-' + i;
-          }
-          
-          html += '<li class="' + cls + '"><a href="#' + h.id + '">' + text + '</a></li>';
-        });
-        html += '</ul>';
-        
-        content.innerHTML = html;
-      }
-      
-      setTimeout(check, 500);
+    // docsify的slugify函数
+    function slugify(text) {
+      return text.toLowerCase()
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim() || 'section';
     }
     
-    // 多种事件触发
-    document.addEventListener('DOMContentLoaded', initTOC);
-    window.addEventListener('load', initTOC);
-    
-    // docsify路由变化时重新生成
-    document.addEventListener('scroll', function() {
+    function initTOC() {
       var content = document.getElementById('toc-content');
-      if (content && content.innerHTML === '') {
-        initTOC();
-      }
+      if (!content) return;
+      
+      var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
+      if (headings.length === 0) return;
+      
+      var html = '<ul>';
+      
+      headings.forEach(function(h, i) {
+        var tag = h.tagName.toLowerCase();
+        var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
+        var text = h.textContent.trim();
+        
+        // 查找已有的anchor
+        var anchor = h.querySelector('a.anchor');
+        var anchorId = '';
+        
+        if (anchor) {
+          anchorId = anchor.getAttribute('href').replace('#', '');
+        } else if (h.id) {
+          anchorId = h.id;
+        } else {
+          // 生成slugify ID
+          anchorId = slugify(text);
+          h.id = anchorId;
+        }
+        
+        html += '<li class="' + cls + '"><a href="#' + anchorId + '">' + text + '</a></li>';
+      });
+      
+      html += '</ul>';
+      content.innerHTML = html;
+    }
+    
+    // 延迟执行确保docsify渲染完成
+    setTimeout(initTOC, 1000);
+    
+    // 监听路由变化
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(initTOC, 1000);
     });
   </script>
 </body>
