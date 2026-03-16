@@ -18,6 +18,30 @@
       max-height: 500px;
     }
     
+    /* 图片图注居中 */
+    .markdown-section p img + em,
+    .markdown-section p img + strong,
+    .markdown-section p:has(img) + p,
+    .markdown-section p img ~ p:not(:has(img)) {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      font-style: normal;
+      margin-top: 8px;
+      display: block;
+    }
+    
+    /* 引用格式的图注 */
+    .markdown-section p img + blockquote {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      font-style: normal;
+      margin-top: 8px;
+      border-left: none;
+      padding: 0;
+    }
+    
     .markdown-section table {
       margin: 0 auto;
       max-width: 100%;
