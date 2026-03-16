@@ -8,7 +8,7 @@
   <style>
     :root { 
       --theme-color: #00979d;
-      --sidebar-width: 260px;
+      --sidebar-width: 280px;
     }
     
     /* 图片居中 */
@@ -23,53 +23,92 @@
       margin: 0 auto;
     }
     
-    /* 侧边栏样式优化 */
+    /* 侧边栏整体样式 */
+    .sidebar {
+      background: #fafafa;
+    }
+    
+    .sidebar-toggle {
+      background: var(--theme-color);
+    }
+    
+    /* 章节标题 (01, 02) - 一级 */
     .sidebar-nav > ul > li > a {
-      font-weight: bold;
-      color: #333;
-      padding: 8px 15px;
-      border-left: 3px solid transparent;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      padding: 12px 20px;
+      border-left: 4px solid transparent;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,151,157,0.05) 100%);
     }
     
     .sidebar-nav > ul > li > a:hover {
-      background: #f5f5f5;
+      background: linear-gradient(90deg, rgba(0,151,157,0.1) 0%, transparent 100%);
       border-left-color: var(--theme-color);
+      color: var(--theme-color);
+    }
+    
+    /* 子目录标题样式 */
+    .sidebar-nav ul ul {
+      margin-top: 5px;
     }
     
     .sidebar-nav ul ul li a {
-      padding: 6px 15px 6px 25px;
       font-size: 14px;
-      color: #666;
+      color: #555;
+      padding: 8px 20px 8px 35px;
+      border-left: 2px solid transparent;
+      margin: 2px 0;
     }
     
     .sidebar-nav ul ul li a:hover {
       color: var(--theme-color);
-      background: #f9f9f9;
+      background: rgba(0,151,157,0.08);
+      border-left-color: var(--theme-color);
     }
     
     .sidebar-nav ul ul li a.active {
       color: var(--theme-color);
+      background: rgba(0,151,157,0.12);
       border-left: 3px solid var(--theme-color);
-      background: #f0f7f7;
+      font-weight: 600;
     }
     
-    /* 章节分组样式 */
-    .sidebar-nav > ul > li > span {
-      display: block;
-      padding: 10px 15px 5px;
-      font-size: 12px;
-      color: #999;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    /* 目录缩进层级 */
+    .sidebar-nav ul ul ul li a {
+      padding-left: 55px;
+      font-size: 13px;
+      color: #777;
     }
     
-    /* 搜索框样式 */
+    /* 搜索框 */
     .search {
-      margin-bottom: 15px;
+      margin: 15px;
     }
     
     .search input {
-      border-radius: 20px;
+      border-radius: 8px;
+      padding: 8px 15px;
+      border: 1px solid #ddd;
+    }
+    
+    .search input:focus {
+      border-color: var(--theme-color);
+      box-shadow: 0 0 0 2px rgba(0,151,157,0.2);
+    }
+    
+    /* 滚动条美化 */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: #aaa;
     }
   </style>
 </head>
@@ -84,8 +123,8 @@
       auto2top: true,
       search: { 
         maxAge: 86400000, 
-        placeholder: '搜索',
-        noData: '未找到结果!'
+        placeholder: '🔍 搜索...',
+        noData: '❌ 未找到结果'
       },
     }
   </script>
