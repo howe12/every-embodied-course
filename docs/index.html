@@ -27,45 +27,7 @@
       max-width: 100%;
     }
     
-    /* 右侧TOC目录 */
-    .toc {
-      right: 0;
-      top: 0;
-      width: 200px;
-      max-height: 100vh;
-      overflow-y: auto;
-      padding: 20px 15px;
-      background: #f9f9f9;
-      border-left: 1px solid #eee;
-      position: fixed;
-    }
-    
-    .toc ul {
-      padding-left: 10px;
-    }
-    
-    .toc li {
-      margin: 5px 0;
-      font-size: 13px;
-    }
-    
-    .toc li a {
-      color: #666;
-      text-decoration: none;
-    }
-    
-    .toc li a:hover {
-      color: var(--theme-color);
-    }
-    
-    .toc-h2 { padding-left: 0; font-weight: 600; }
-    .toc-h3 { padding-left: 15px; font-size: 12px; }
-    
-    /* 侧边栏样式 */
-    .sidebar {
-      background: #fafafa;
-    }
-    
+    /* 左侧侧边栏 - 仅显示一级和二级 */
     .sidebar-nav > ul > li > a {
       font-size: 16px;
       font-weight: 700;
@@ -77,6 +39,10 @@
     .sidebar-nav > ul > li > a:hover {
       border-left-color: var(--theme-color);
       color: var(--theme-color);
+    }
+    
+    .sidebar-nav > ul > li > ul {
+      display: block;
     }
     
     .sidebar-nav ul ul li a {
@@ -96,13 +62,79 @@
       font-weight: 600;
     }
     
+    /* 隐藏三级及以下的左侧目录 */
+    .sidebar-nav ul ul ul {
+      display: none;
+    }
+    
     /* 搜索框 */
     .search { margin: 15px; }
     .search input { border-radius: 8px; padding: 8px 15px; }
     
+    /* 右侧TOC - 浮动目录 */
+    .docsify-toc {
+      position: fixed;
+      right: 20px;
+      top: 100px;
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      font-size: 13px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .docsify-toc:hover,
+    body.toc-active .docsify-toc {
+      opacity: 1;
+    }
+    
+    .docsify-toc ul {
+      padding-left: 15px;
+      margin: 0;
+    }
+    
+    .docsify-toc li {
+      margin: 5px 0;
+      list-style: none;
+    }
+    
+    .docsify-toc li a {
+      color: #666;
+      text-decoration: none;
+      display: block;
+      padding: 3px 0;
+    }
+    
+    .docsify-toc li a:hover {
+      color: var(--theme-color);
+    }
+    
+    .docsify-toc-h2 {
+      font-weight: 600;
+      color: #333;
+      margin-top: 10px;
+    }
+    
+    .docsify-toc-h3 {
+      font-size: 12px;
+      padding-left: 15px;
+    }
+    
     /* 内容区域右边距 */
     .markdown-section {
-      padding-right: 220px;
+      padding-right: 230px;
+    }
+    
+    /* 滚动时显示TOC的提示 */
+    @media (min-width: 1200px) {
+      .docsify-toc {
+        opacity: 0.3;
+      }
     }
   </style>
 </head>
@@ -113,16 +145,8 @@
       name: 'Every Embodied Course',
       repo: 'https://github.com/howe12/every-embodied-course',
       loadSidebar: true,
-      subMaxLevel: 3,
+      subMaxLevel: 2,  // 左侧只显示2级
       auto2top: true,
-      toc:
-      {
-        tocLevel1: true,
-        tocLevel2: true,
-        tocLevel3: true,
-        scope: '.markdown-section',
-        heading: 'h2, h3'
-      },
       search: { 
         maxAge: 86400000, 
         placeholder: '🔍 搜索...',
