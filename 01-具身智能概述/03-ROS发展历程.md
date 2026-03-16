@@ -1,0 +1,285 @@
+# 1.3 ROS发展历程与版本对比
+
+**作者**：霍海杰 | **联系方式**：howe12@126.com
+
+---
+
+> **前置说明**：在上一节中，我们了解了机器人的五大系统和分类。现在，我们要把目光投向机器人的"灵魂"——软件系统。在众多机器人软件框架中，ROS（Robot Operating System）无疑是当今最具影响力的开源机器人操作系统。然而，你可能不知道的是，ROS并非一开始就是一个成熟的系统，它的诞生和发展经历了一个漫长的过程。更重要的是，ROS已经演进到了第二代——ROS2，这一代系统针对第一代的局限性进行了全面革新。在这一节中，我们将详细讲述ROS的起源、ROS1的局限、ROS2的改进，以及如何选择适合自己的版本。
+
+---
+
+## 1. ROS起源——从实验室走向开源
+
+### 1.1 Willow Garage：一个意外的开端
+
+2007年，一个名为**Willow Garage**的公司在美国悄然成立。这家公司的创始人是斯坦福大学计算机科学系的Scott Hassan，他曾是Google早期核心技术的贡献者，也是著名的个人机器人项目"Stanford Artificial Intelligence Robot"（STAIR）的参与者。Willow Garage的使命是开发能够服务于人们的个人机器人，团队汇聚了来自斯坦福、MIT等顶尖高校的研究人员，致力于让机器人从实验室走进千家万户。
+
+![Willow Garage公司Logo](./images/willow_garage_logo.jpg)
+*图注：Willow Garage 公司 logo*
+
+然而，开发一个完整的机器人软件系统谈何容易。团队发现，他们在每个项目中都在重复造轮子——导航算法、视觉处理、运动控制，每一个项目都要从零开始编写这些基础功能。这种重复劳动让开发效率大打折扣，也促使他们开始思考一个问题：能否有一套通用的软件框架，让机器人开发变得简单高效？
+
+**趣闻轶事**：有意思的是，Willow Garage这个公司名称源自一个硅谷梗。传说中硅谷有一种"车裤"（garage）文化——无数伟大的科技公司都是从车库里走出来的。Google、Apple、HP莫不如此。Willow Garage故意取了这个名字，暗示他们要继承车库创业的传奇精神。只可惜，这家公司最终并没有像Google那样成长为巨头，但它创造的ROS却深刻改变了机器人行业。
+
+### 1.2 ROS的诞生
+
+2009年，一个划时代的产品诞生了。Willow Garage正式发布了**ROS（Robot Operating System）**的第一个发行版——"Box Turtle"。这不仅仅是一个软件，更是一套完整的机器人软件生态系统。
+
+![Box Turtle海龟](./images/box_turtle.jpg)
+*图注：Box Turtle，ROS首个发行版，以箱龟命名*
+
+![ROS官方Logo](./images/ros_logo.svg)
+*图注：ROS 官方标志*
+
+ROS的全称是"Robot Operating System"，也就是"机器人操作系统"。虽然名字中包含"操作系统"，但ROS并不是一个真正的操作系统（如Windows或Linux）。它更像是一套建立在现有操作系统之上的软件框架和工具集，提供了节点通讯、消息传递、硬件抽象等基础功能。有趣的是，ROS的每个发行版都以海龟命名，从最初的Box Turtle到后来的Indigo、Kinetic、Melodic，每一个版本都是一种海龟或陆龟的名字，这一传统一直延续到ROS2。
+
+**为什么用海龟命名？** 这里还有个有趣的故事。ROS团队早期开发代码时，在白板上画了一只海龟作为吉祥物。结果一发不可收拾，从此每个版本都延续了这个传统。
+
+### 1.3 开源社区的力量
+
+ROS的成功，不仅在于Willow Garage的贡献，更在于其开源的核心理念。2012年，ROS正式从Willow Garage转移到开源机器人基金会（Open Source Robotics Foundation, OSRF）旗下，成为真正的开源项目。
+
+![ROS社区发展](./images/ros_community_growth.jpg)
+*图注：ROS 开源社区蓬勃发展，已成为机器人软件的事实标准*
+
+从2010年ROS正式开源，到2013年ROS Wiki上已有超过1000个软件包；从2015年全球ROS开发者超过10000人，到2020年ROS软件包数量超过10000个，再到2024年ROS社区拥有超过50000名活跃开发者，这些惊人的增长数字见证了ROS的蓬勃发展。从学术研究到工业应用，从本科课程到商业产品，ROS已经成为机器人软件开发的"事实标准"。
+
+**ROS的"黑话"文化**：ROS社区发展出了一套独特的"黑话"体系。比如，你经常会在论坛里看到有人问"我的node起不来"（启动失败）、"topic没数据"（话题没有消息发布）、"tf报错"（坐标变换出问题）。这些行话只有老ROS玩家才能听懂，也成为区分"萌新"和"老炮"的标志。
+
+---
+
+## 1.5 历代ROS版本总览——从海龟到飞鹰
+
+ROS和ROS2的版本命名有一个独特的传统——都以乌龟或爬行动物命名。这个传统始于2009年，至今已延续十余年。了解这些版本，对于选择合适的ROS版本、理解ROS生态发展都至关重要。
+
+### 1.5.1 ROS1版本时间线
+**ROS1各版本详情**：
+
+![ROS1版本Logo总览](./images/ros1_versions.jpg)
+*图注：ROS1 各版本标志*
+
+| 版本 | 发布年份 | 代号 | 适配Ubuntu | 特点 |
+|------|----------|------|------------|------|
+| Box Turtle | 2009 | 箱龟 | - | 首个发行版，功能初创 |
+| C Turtle | 2010 | 绿海龟 | - | 基础架构完善 |
+| Diamondback | 2011 | 钻石背 | - | 初步可用 |
+| Electric Emys | 2012 | 电龟 | - | **正式开源**，社区启动 |
+| Fuerte Turtle | 2013 | 硬背 | - | 架构重构 |
+| **Indigo Igloo** | 2014 | 冰屋 | 14.04 | **首个LTS**，里程碑版本 |
+| Jade Turtle | 2015 | 玉龟 | 14.04/15.04 | 增量更新 |
+| **Kinetic Kame** | 2016 | 动力龟 | 16.04 | **最广泛使用**，功能成熟 |
+| Lunar Loggerhead | 2017 | 月光龟 | 16.04/17.04 | 过渡版本 |
+| **Melodic Morenia** | 2018 |  melodic龟 | 18.04 | **LTS**，ROS1集大成 |
+| **Noetic Ninjemys** | 2020 | 忍者龟 | 20.04 | **最后一个ROS1**，Python 3 |
+
+**版本趣闻**：
+- "Indigo"是靛蓝色，团队希望它像深海一样深邃稳定
+- "Kinetic"意为"动力"，那段时间ROS开始被工业界广泛采用
+- "Noetic"来自虚构海龟"ninjemys"，取名时社区投票好几轮
+- 每只海龟都有独特含义——有的来自濒危物种，有的来自神话
+
+### 1.5.2 ROS2版本时间线
+**ROS2各版本详情**：
+
+![ROS2版本Logo总览](./images/ros2_versions.jpg)
+*图注：ROS2 各版本标志*
+
+| 版本 | 发布年份 | 代号 | 适配Ubuntu | 特点 |
+|------|----------|------|------------|------|
+| Alpha/Beta | 2014-2015 | - | - | 内部/社区测试 |
+| Ardent Apalone | 2016 | 扁平龟 | - | **首个正式版**，从0到1 |
+| Bouncy Bolson | 2017 | 箱龟 | - | 稳定性提升 |
+| Crystal Clemmys | 2018 | 水晶龟 | 16.04/18.04 | 核心功能完善 |
+| Dashing Diademata | 2019 | 闪电龟 | 16.04/18.04 | **首个LTS尝试** |
+| Eloquent Elusor | 2020 |  eloquen龟 | 18.04/20.04 | API稳定 |
+| **Foxy Fitzroy** | 2021 | 狐狸龟 | 20.04 | **首个LTS**，里程碑 |
+| **Galactic Geochelone** | 2022 | 银河龟 | 20.04 | 第二个LTS |
+| **Humble Hawksbill** | 2022 | 谦逊龟 | 22.04 | **工业LTS**，当前主流 |
+| Iron Irwini | 2023 | 铁龟 | 20.04/22.04 | 过渡版本 |
+| **Jazzy Jalisco** | 2024 | 爵士龟 | 22.04 | **最新稳定版** |
+
+**版本趣闻**：
+- ROS2的命名从"乌龟"逐渐扩展到各种爬行动物
+- "Humble"（谦逊）是因为ROS2团队"谦虚"地承认了ROS1的不足
+- "Jazzy"（爵士）代表ROS2已足够成熟，可以"载歌载舞"
+- 每个版本代号都是一种濒危或受保护的爬行动物，暗示保护ROS生态
+
+### 1.5.3 ROS1 vs ROS2 版本选择决策树
+
+![版本选择决策流程图](./images/version_decision_flowchart.jpg)
+*图注：根据不同场景选择合适的ROS版本*
+
+### 1.5.4 版本对应关系速查表
+
+| 场景 | 推荐版本 | 理由 |
+|------|----------|------|
+| 学习ROS基础 | Humble | 文档最全，社区最活跃 |
+| 工业应用 | Humble | LTS到2027，稳定性验证 |
+| 前沿研究 | Jazzy | 最新功能，论文常用 |
+| 产品开发 | Humble | 长期维护，风险最低 |
+| 学校教学 | Humble/Noetic | 教程最多 |
+| 遗产项目维护 | Noetic/Melodic | 已有代码兼容 |
+
+---
+
+## 2. ROS1核心局限——辉煌背后的隐忧
+
+### 2.1 单主节点风险：一切依赖一个"中心"
+
+ROS1采用主节点（Master）架构。整个ROS系统中，只有一个主节点负责维护所有节点的信息、话题注册和服务发现。这种架构有什么问题？想象一下，如果公司里只有一个CEO，所有部门都要通过他来协调工作，当CEO请假时，整个公司的运作都会受到影响。ROS1的主节点就是那个"CEO"。
+
+![ROS1单主节点架构](./images/ros1_master_architecture.jpg)
+*图注：ROS1 采用单 Master 架构，存在单点故障风险*
+
+具体来说，ROS1面临三个核心问题。首先是**单点故障**，如果Master崩溃，所有节点之间的通讯立即中断，整个系统陷入瘫痪。其次是**启动顺序依赖**，所有节点必须在Master启动之后才能正常工作，这增加了系统启动的复杂性。第三是**扩展性差**，随着节点数量增加，Master的通讯开销成为瓶颈，系统性能急剧下降。这对于追求高可靠性的工业应用来说，是难以接受的。
+
+**"主节点"的谐音梗**：在ROS社区里，Master节点有时候被戏称为"master"（主人），而节点们则是"slaves"（从节点）。这个命名引发了一些争议——有人觉得这个比喻不够"政治正确"。到了ROS2时代，这些术语被改成了更加中性的"主机"和"成员"，皆大欢喜。
+
+**实时性vs确定性**：这里有个容易混淆的概念需要澄清。实时性（real-time）并不等于快速（fast）。一个实时系统最重要的是"确定性"——任务总是在可预测的时间内完成，而不是追求最快的速度。打个比方：一个每帧都稳定在20ms渲染完成的游戏，虽然比不过那些帧率忽高忽低的"快速"游戏，但它一定是"实时"的，因为渲染时间是确定的。
+
+### 2.3 跨平台差：被绑定在Linux上
+
+ROS1最初只支持Linux（Ubuntu）系统。虽然后来有Windows和macOS的实验性支持，但体验始终不完整。这意味着，如果你的团队使用Windows进行开发，ROS1会让你很痛苦。如果你想把机器人软件移植到嵌入式系统（如ARM架构），ROS1并不友好。跨平台协作开发变得困难重重，不同操作系统之间的兼容性问题消耗了开发者大量精力。
+
+![ROS1跨平台支持](./images/ros1_cross_platform.jpg)
+*图注：ROS1 主要支持 Linux，Windows/macOS 支持不完整*
+
+### 2.4 版本碎片化
+
+随着ROS1的普及，不同版本的ROS之间出现了碎片化问题。从2014年的Indigo Igloo到2020年的Noetic Ninjemys，每个版本都有自己的软件包生态，不同版本之间的代码不能直接兼容。Indigo适配Ubuntu 14.04，Kinetic适配Ubuntu 16.04，Melodic适配Ubuntu 18.04，Noetic适配Ubuntu 20.04，每个版本都对应特定的Ubuntu版本。这导致开发者需要花费大量时间维护不同版本的代码，增加了开发成本，也给项目升级带来了诸多障碍。
+
+---
+
+## 3. ROS2关键改进——全新一代的诞生
+
+### 3.1 DDS中间件：通讯层的革命
+
+ROS2最大的改变，是引入了DDS（Data Distribution Service）作为默认的通讯中间件。DDS是一个由对象管理组织（OMG）制定的分布式实时通讯标准，它被广泛应用于航空、军事、证券交易等对可靠性和实时性有极高要求的领域。
+
+![DDS架构示意图](./images/dds_architecture.jpg)
+*图注：DDS 采用去中心化架构，支持实时可靠通讯*
+
+DDS为ROS2带来了革命性的变化。首先是去中心化，无需Master节点，每个节点可以直接发现彼此。其次是实时性，DDS支持确定性数据传输。第三是可靠性，DDS支持可靠通讯。
+
+**DDS的"三教九流"**：DDS标准本身有多个"流派"实现。常见的包括eProsima的Fast DDS、RTI的Connext DDS、Eclipse的Cyclone DDS等。ROS2默认使用Fast DDS，因为它开源免费、性能优秀。
+
+### 3.2 分布式架构：真正的"分布式"
+
+ROS2放弃了ROS1的单Master架构，采用真正的分布式设计。
+
+![ROS2分布式架构](./images/ros2_distributed_architecture.jpg)
+*图注：ROS2 采用真正分布式架构，无单点故障*
+
+这意味着，你可以让机器人的各个部件分布在不同的计算机上，通过ROS2进行无缝通讯。
+
+### 3.3 实时性支持：从"能用"到"好用"
+
+ROS2在实时性方面做了大量改进。
+
+![ROS2实时性对比](./images/real_time_comparison.jpg)
+*图注：ROS1 vs ROS2 实时性对比*
+
+实际效果：ROS1控制循环约为100Hz，而ROS2实时控制可达1kHz到10kHz。
+
+### 3.4 多语言兼容：真正的"多语言"
+
+ROS2对多语言的支持比ROS1更加完善。
+
+![ROS2多语言支持](./images/ros2_multilang.jpg)
+*图注：ROS2 支持多种编程语言*
+
+ROS2提供了rcl（ROS Client Library）作为各语言的客户端库，API一致。
+
+### 3.5 跨平台支持：真正的"全平台"
+
+ROS2实现了真正的跨平台支持。
+
+![ROS2跨平台支持](./images/ros2_cross_platform.jpg)
+*图注：ROS2 支持 Linux、Windows、macOS 及嵌入式系统*
+
+---
+
+## 4. 版本选择建议——适合自己的才是最好的
+
+### 4.1 ROS1 Noetic：最后的坚守
+
+2020年5月，ROS1推出了最后一个LTS（长期支持）版本——Noetic Ninjemys。Noetic基于Python 3，适配Ubuntu 20.04，是最后一个支持Python 2的ROS版本，社区支持到2025年5月。
+
+![ROS1 Noetic标志](./images/ros1_noetic.png)
+*图注：ROS1 Noetic 是最后一个长期支持版本*
+
+Noetic的适用场景主要有：现有ROS1项目无需为了迁移而迁移；学习ROS1作为了解ROS历史的途径；特定硬件只提供ROS1驱动；维护已有的ROS1代码库。但需要注意的是，2025年5月后ROS1将不再得到官方维护，新项目强烈建议使用ROS2。
+
+**Noetic的命名由来**：Noetic来自"ninjemys"——一个虚构的海龟物种。
+
+### 4.2 ROS2 Humble Hawksbill：工业级稳定
+
+2022年5月，ROS2推出了第二个LTS版本——Humble Hawksbill。Humble是LTS版本，官方支持到2027年5月，提供5年支持周期。
+
+![ROS2 Humble标志](./images/ros2_humble.png)
+*图注：ROS2 Humble 是工业级长期支持版本*
+
+Humble的适用场景包括：新项目首选Humble；需要高可靠性的工业应用场景；需要长期稳定的研究平台。
+
+**Humble的谐音梗**：Humble在英文中是"谦虚"的意思。ROS社区里流传着一个笑话：ROS2团队给这个版本取名"Humble"，是因为他们终于意识到ROS1的诸多问题，决定"谦虚"地从头再来。
+
+### 4.3 从ROS1迁移到ROS2的必要性
+
+为什么要从ROS1迁移到ROS2？一方面，随着ROS1停止维护日期临近，ROS2是未来的主流选择。另一方面，ROS2在实时性、分布式、安全性等方面全面超越ROS1。
+
+迁移策略上，可以使用ros1_bridge实现渐进式迁移。
+
+![ros1_bridge工作原理](./images/ros1_bridge.jpg)
+*图注：ros1_bridge 实现 ROS1 与 ROS2 渐进式迁移*
+
+---
+
+## 本章小结
+
+本章我们一起回顾了ROS的发展历程，并深入对比了ROS1和ROS2的核心差异。
+
+在ROS起源部分，我们了解到2007年Willow Garage启动ROS项目，2009年发布第一个发行版，2012年开源至今，已发展成为机器人软件开发的行业标准。ROS的诞生源于开发者们"不想重复造轮子"的朴素愿望，而开源文化让它成长为拥有数万名开发者的庞大社区。
+
+在ROS1局限部分，单主节点带来的单点故障风险、实时性不足导致的控制频率限制、跨平台支持不佳、以及版本碎片化问题，都是ROS1在向更高级别应用发展时面临的挑战。这些局限性并非设计缺陷，而是ROS1在早期为追求快速迭代和灵活性所做的取舍。
+
+在ROS2改进部分，DDS中间件带来了去中心化通讯，分布式架构实现了真正的多节点协同，实时性支持可达1kHz以上，多语言兼容和跨平台支持让ROS2成为真正的工业级系统。ROS2不是简单的升级，而是从架构层面的全新设计。
+
+在版本选择部分，ROS1 Noetic仅用于维护现有项目，将在2025年停止支持；ROS2 Humble是新项目首选，LTS支持到2027年；可以使用ros1_bridge实现渐进式迁移。
+
+---
+
+## 思考与练习
+
+1. 想一想：如果你要开发一个新的机器人项目，你会选择ROS1还是ROS2？为什么？
+2. 查一查：你使用的机器人硬件是否支持ROS2？驱动是否可用？
+3. 议一议：开源软件的生命周期对机器人开发者有什么影响？
+
+---
+
+## 参考资料
+
+### ROS官方文档
+
+1. ROS Wiki: <https://www.ros.org/>
+2. ROS2 Documentation: <https://docs.ros.org/en/rolling/>
+3. ROS2 Design Articles: <http://design.ros2.org/>
+
+### ROS历史与架构
+
+4. "A History of ROS" - Morgan Quigley: <https://www.researchgate.net/publication/248382097_ROS_An_Open-Source_Robot_Operating_System>
+5. "ROS2 Architecture and Design" - ROS2 Documentation: <https://docs.ros.org/en/rolling/Concepts/About-ROS2-Architecture/>
+6. "Understanding the DDS Data-Centric Publish-Subscribe Model": <https://www.omg.org/dds/>
+
+### 版本迁移
+
+7. ROS1 to ROS2 Migration Guide: <https://docs.ros.org/en/rolling/Guides/Migrating-from-ROS1/>
+8. ros1_bridge Documentation: <https://docs.ros.org/en/rolling/p/ros1_bridge/README/>
+
+### 视频教程
+
+9. ROS Official YouTube Channel: <https://www.youtube.com/@RoboticOperatingSystem>
+10. ROS2 Tutorial Series: <https://www.youtube.com/playlist?list=PLccCBSbyA9C0_2R0W1MlGLObCCc-NbE7X>
+
+---
+
+*下一节我们将学习"1.4 ROS2系统架构与核心概念"，深入了解ROS2的内部工作机制。准备好了吗？让我们继续深入ROS2的世界吧！*
