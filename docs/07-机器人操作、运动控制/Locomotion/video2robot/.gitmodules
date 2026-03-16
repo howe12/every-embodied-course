@@ -1,0 +1,6 @@
+[submodule "third_party/GMR"]
+	path = third_party/GMR
+	url = https://github.com/taeyoun811/GMR.git
+[submodule "third_party/PromptHMR"]
+	path = third_party/PromptHMR
+	url = https://github.com/taeyoun811/PromptHMR.git
