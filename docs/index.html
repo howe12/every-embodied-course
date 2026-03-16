@@ -11,23 +11,18 @@
       --sidebar-width: 280px;
     }
     
-    /* 图片居中和大小限制 */
     .markdown-section img {
       display: block;
       margin: 0 auto;
       max-width: 100%;
       max-height: 500px;
-      width: auto;
-      height: auto;
     }
     
-    /* 表格居中 */
     .markdown-section table {
       margin: 0 auto;
       max-width: 100%;
     }
     
-    /* 左侧侧边栏 */
     .sidebar-nav > ul > li > a {
       font-size: 16px;
       font-weight: 700;
@@ -58,38 +53,36 @@
       font-weight: 600;
     }
     
-    /* 隐藏三级 */
     .sidebar-nav ul ul ul {
       display: none;
     }
     
-    /* 搜索框 */
     .search { margin: 15px; }
     .search input { border-radius: 8px; padding: 8px 15px; }
     
-    /* 右侧TOC目录 */
+    /* 右侧TOC */
     .toc-right {
       position: fixed;
       right: 15px;
-      top: 120px;
-      width: 200px;
-      max-height: 70vh;
+      top: 100px;
+      width: 180px;
+      max-height: 75vh;
       overflow-y: auto;
-      padding: 15px;
+      padding: 12px;
       background: #f8f9fa;
       border-radius: 8px;
       border-left: 3px solid var(--theme-color);
       font-size: 13px;
-      z-index: 10;
+      z-index: 100;
     }
     
-    .toc-right h3 {
-      font-size: 14px;
+    .toc-right h4 {
+      font-size: 13px;
       font-weight: 600;
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0;
       color: #333;
-      padding-bottom: 8px;
       border-bottom: 1px solid #eee;
+      padding-bottom: 6px;
     }
     
     .toc-right ul {
@@ -99,7 +92,7 @@
     }
     
     .toc-right li {
-      margin: 6px 0;
+      margin: 4px 0;
     }
     
     .toc-right a {
@@ -107,9 +100,8 @@
       text-decoration: none;
       font-size: 12px;
       display: block;
-      padding: 3px 8px;
-      border-radius: 4px;
-      transition: all 0.2s;
+      padding: 2px 6px;
+      border-radius: 3px;
     }
     
     .toc-right a:hover {
@@ -117,25 +109,11 @@
       background: rgba(0,151,157,0.1);
     }
     
-    .toc-right .toc-h2 {
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-      margin-top: 10px;
-    }
+    .toc-h2 { font-weight: 600; font-size: 12px; color: #333; }
+    .toc-h3 { padding-left: 10px; font-size: 11px; }
     
-    .toc-right .toc-h2:first-child {
-      margin-top: 0;
-    }
-    
-    .toc-right .toc-h3 {
-      padding-left: 15px;
-      font-size: 12px;
-    }
-    
-    /* 内容区域右边距 */
     .markdown-section {
-      padding-right: 240px;
+      padding-right: 220px;
     }
     
     @media (max-width: 1200px) {
@@ -147,10 +125,9 @@
 <body>
   <div id="app">加载中...</div>
   
-  <!-- 右侧TOC容器 -->
-  <div class="toc-right" id="toc-container" style="display:none;">
-    <h3>📑 文章目录</h3>
-    <div id="toc-list"></div>
+  <div class="toc-right" id="toc">
+    <h4>📑 文章目录</h4>
+    <div id="toc-content"></div>
   </div>
   
   <script>
@@ -171,65 +148,58 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   
   <script>
-    // 生成TOC - 使用docsify已经生成的ID
-    function generateTOC() {
-      setTimeout(function() {
-        const tocContainer = document.getElementById('toc-container');
-        const tocList = document.getElementById('toc-list');
+    // 等待docsify渲染完成后生成TOC
+    function initTOC() {
+      var checkCount = 0;
+      var maxChecks = 20;
+      
+      function check() {
+        checkCount++;
+        var content = document.getElementById('toc-content');
+        var section = document.querySelector('.markdown-section');
         
-        if (!tocContainer || !tocList) return;
+        if (!content) return;
         
-        // 查找所有h2和h3标题 - 使用docsify生成的anchor
-        const headings = document.querySelectorAll('.markdown-section h2 a.anchor, .markdown-section h3 a.anchor');
+        // 查找所有h2, h3标题
+        var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
         
-        // 也查找没有anchor的标题
-        const headings2 = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
+        if (headings.length === 0 && checkCount < maxChecks) {
+          setTimeout(check, 300);
+          return;
+        }
         
-        let html = '<ul>';
-        
-        // 处理有anchor的标题
-        headings.forEach(function(anchor) {
-          const parent = anchor.parentElement;
-          const level = parent.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
-          const text = parent.textContent.replace(anchor.textContent, '').trim();
-          const id = anchor.getAttribute('href').replace('#', '');
+        var html = '<ul>';
+        headings.forEach(function(h, i) {
+          var tag = h.tagName.toLowerCase();
+          var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
+          var text = h.textContent.trim();
           
-          if (text) {
-            html += '<li class="' + level + '"><a href="#' + id + '">' + text + '</a></li>';
+          // 确保有id
+          if (!h.id) {
+            h.id = 'section-' + i;
           }
+          
+          html += '<li class="' + cls + '"><a href="#' + h.id + '">' + text + '</a></li>';
         });
-        
-        // 处理没有anchor的标题
-        headings2.forEach(function(heading) {
-          const anchor = heading.querySelector('a.anchor');
-          if (!anchor) {
-            const level = heading.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
-            const text = heading.textContent.trim();
-            let id = heading.id;
-            
-            // 如果没有ID，生成一个
-            if (!id) {
-              id = text.toLowerCase().replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '-');
-              heading.id = id;
-            }
-            
-            if (text) {
-              html += '<li class="' + level + '"><a href="#' + id + '">' + text + '</a></li>';
-            }
-          }
-        });
-        
         html += '</ul>';
         
-        if (html !== '<ul></ul>') {
-          tocList.innerHTML = html;
-          tocContainer.style.display = 'block';
-        }
-      }, 800);
+        content.innerHTML = html;
+      }
+      
+      setTimeout(check, 500);
     }
     
-    // 页面加载后生成TOC
-    document.addEventListener('DOMContentLoaded', generateTOC);
+    // 多种事件触发
+    document.addEventListener('DOMContentLoaded', initTOC);
+    window.addEventListener('load', initTOC);
+    
+    // docsify路由变化时重新生成
+    document.addEventListener('scroll', function() {
+      var content = document.getElementById('toc-content');
+      if (content && content.innerHTML === '') {
+        initTOC();
+      }
+    });
   </script>
 </body>
 </html>
