@@ -18,6 +18,10 @@
       <a href="https://github.com/howe12/every-embodied-course/network/members" target="_blank">
           <img src="https://img.shields.io/github/forks/howe12/every-embodied-course?color=0052cc&style=for-the-badge" alt="Forks"></a>
   </p>
+  
+  <p align="center">
+    🔗 <a href="https://howe12.github.io/every-embodied-course/" target="_blank">在线访问课程</a>
+  </p>
 </div>
 
 ---
@@ -51,7 +55,6 @@
 
 ### 配套资源
 
-- 🐢 [turtlesim仿真](https://github.com/ros/ros_tutorials) - 入门练习
 - 📚 [ROS2官方文档](https://docs.ros.org/en/humble/) - 权威参考
 - 💻 [本课程GitHub](https://github.com/howe12/every-embodied-course) - 获取源码
 
