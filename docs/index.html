@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
   <style>
-    :root { --theme-color: #00979d; }
+    :root { 
+      --theme-color: #00979d;
+      --sidebar-width: 260px;
+    }
     
     /* 图片居中 */
     .markdown-section img {
@@ -15,15 +18,58 @@
       max-width: 100%;
     }
     
-    /* 图片标题居中 */
-    .markdown-section figure {
-      text-align: center;
-      margin: 20px 0;
-    }
-    
     /* 表格居中 */
     .markdown-section table {
       margin: 0 auto;
+    }
+    
+    /* 侧边栏样式优化 */
+    .sidebar-nav > ul > li > a {
+      font-weight: bold;
+      color: #333;
+      padding: 8px 15px;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-nav > ul > li > a:hover {
+      background: #f5f5f5;
+      border-left-color: var(--theme-color);
+    }
+    
+    .sidebar-nav ul ul li a {
+      padding: 6px 15px 6px 25px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .sidebar-nav ul ul li a:hover {
+      color: var(--theme-color);
+      background: #f9f9f9;
+    }
+    
+    .sidebar-nav ul ul li a.active {
+      color: var(--theme-color);
+      border-left: 3px solid var(--theme-color);
+      background: #f0f7f7;
+    }
+    
+    /* 章节分组样式 */
+    .sidebar-nav > ul > li > span {
+      display: block;
+      padding: 10px 15px 5px;
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* 搜索框样式 */
+    .search {
+      margin-bottom: 15px;
+    }
+    
+    .search input {
+      border-radius: 20px;
     }
   </style>
 </head>
@@ -36,7 +82,11 @@
       loadSidebar: true,
       subMaxLevel: 3,
       auto2top: true,
-      search: { maxAge: 86400000, placeholder: '搜索' },
+      search: { 
+        maxAge: 86400000, 
+        placeholder: '搜索',
+        noData: '未找到结果!'
+      },
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
