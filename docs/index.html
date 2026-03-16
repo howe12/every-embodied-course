@@ -171,49 +171,65 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   
   <script>
-    // 生成TOC
+    // 生成TOC - 使用docsify已经生成的ID
     function generateTOC() {
       setTimeout(function() {
         const tocContainer = document.getElementById('toc-container');
         const tocList = document.getElementById('toc-list');
         
-        if (!tocContainer || !tocList) {
-          console.log('TOC container not found');
-          return;
-        }
+        if (!tocContainer || !tocList) return;
         
-        // 查找所有h2和h3标题
-        const headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
-        console.log('Found headings:', headings.length);
+        // 查找所有h2和h3标题 - 使用docsify生成的anchor
+        const headings = document.querySelectorAll('.markdown-section h2 a.anchor, .markdown-section h3 a.anchor');
         
-        if (headings.length === 0) {
-          tocContainer.style.display = 'none';
-          return;
-        }
+        // 也查找没有anchor的标题
+        const headings2 = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
         
         let html = '<ul>';
-        headings.forEach((heading, index) => {
-          const id = 'heading-' + index;
-          heading.id = id;
-          const level = heading.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
-          const text = heading.textContent.trim();
+        
+        // 处理有anchor的标题
+        headings.forEach(function(anchor) {
+          const parent = anchor.parentElement;
+          const level = parent.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
+          const text = parent.textContent.replace(anchor.textContent, '').trim();
+          const id = anchor.getAttribute('href').replace('#', '');
+          
           if (text) {
-            html += `<li class="${level}"><a href="#${id}">${text}</a></li>`;
+            html += '<li class="' + level + '"><a href="#' + id + '">' + text + '</a></li>';
           }
         });
+        
+        // 处理没有anchor的标题
+        headings2.forEach(function(heading) {
+          const anchor = heading.querySelector('a.anchor');
+          if (!anchor) {
+            const level = heading.tagName.toLowerCase() === 'h2' ? 'toc-h2' : 'toc-h3';
+            const text = heading.textContent.trim();
+            let id = heading.id;
+            
+            // 如果没有ID，生成一个
+            if (!id) {
+              id = text.toLowerCase().replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '-');
+              heading.id = id;
+            }
+            
+            if (text) {
+              html += '<li class="' + level + '"><a href="#' + id + '">' + text + '</a></li>';
+            }
+          }
+        });
+        
         html += '</ul>';
         
-        tocList.innerHTML = html;
-        tocContainer.style.display = 'block';
-        console.log('TOC generated');
-      }, 500); // 延迟500ms确保页面加载完成
+        if (html !== '<ul></ul>') {
+          tocList.innerHTML = html;
+          tocContainer.style.display = 'block';
+        }
+      }, 800);
     }
     
     // 页面加载后生成TOC
     document.addEventListener('DOMContentLoaded', generateTOC);
-    
-    // docsify加载完成后也生成
-    window.onload = generateTOC;
   </script>
 </body>
 </html>
