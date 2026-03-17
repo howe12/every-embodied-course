@@ -160,30 +160,49 @@
       var content = document.getElementById('toc-content');
       if (!content) return;
       
-      var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
-      if (headings.length === 0) {
-        content.innerHTML = '<p style="color:#999;font-size:12px;">暂无目录</p>';
-        return;
-      }
-      
-      var html = '<ul>';
-      headings.forEach(function(h) {
-        var tag = h.tagName.toLowerCase();
-        var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
-        var text = h.textContent.trim();
+      // 等待 docsify 渲染完成
+      setTimeout(function() {
+        var headings = document.querySelectorAll('.markdown-section h2, .markdown-section h3');
+        if (headings.length === 0) {
+          content.innerHTML = '<p style="color:#999;font-size:12px;">暂无目录</p>';
+          return;
+        }
         
-        var anchorId = h.id || slugify(text);
-        if (!h.id) h.id = anchorId;
+        var html = '<ul>';
+        headings.forEach(function(h) {
+          var tag = h.tagName.toLowerCase();
+          var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
+          var text = h.textContent.trim();
+          
+          // 优先使用 docsify 生成的 anchor
+          var anchor = h.querySelector('a.anchor');
+          var anchorId = '';
+          
+          if (anchor && anchor.getAttribute('href')) {
+            anchorId = anchor.getAttribute('href').replace('#', '');
+          } else if (h.id) {
+            anchorId = h.id;
+          } else {
+            // 使用 slugify 生成
+            anchorId = slugify(text);
+            h.id = anchorId;
+          }
+          
+          html += '<li class="' + cls + '"><a href="#' + anchorId + '">' + text + '</a></li>';
+        });
         
-        html += '<li class="' + cls + '"><a href="#' + anchorId + '">' + text + '</a></li>';
-      });
-      
-      html += '</ul>';
-      content.innerHTML = html;
+        html += '</ul>';
+        content.innerHTML = html;
+      }, 500);  // 延迟等待 docsify 渲染
     }
     
+    // 页面加载后生成目录
     setTimeout(initTOC, 1000);
-    window.addEventListener('hashchange', function() { setTimeout(initTOC, 800); });
+    
+    // 页面切换后重新生成目录
+    window.addEventListener('hashchange', function() {
+      setTimeout(initTOC, 800);
+    });
   </script>
   
   <!-- 移除 sidebar 标题 -->
