@@ -5,8 +5,6 @@
   <title>Every Embodied Course - ROS2机器人仿真课程</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
-  <!-- KaTeX 数学公式支持 -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
     :root { 
       --theme-color: #00979d;
@@ -265,33 +263,35 @@
     }
   </script>
   
+  <!-- KaTeX 数学公式支持 (必须在 docsify 之前加载) -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  
   <script>
     window.$docsify = {
       name: 'Every Embodied Course',
       repo: 'https://github.com/howe12/every-embodied-course',
       loadSidebar: true,
       subMaxLevel: 0,
-      auto2top: true
+      auto2top: true,
+      
+      // KaTeX 渲染钩子 - 页面渲染完成后重新渲染公式
+      hooks: {
+        'done': function() {
+          renderMathInElement(document.querySelector('.markdown-section'), {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false,
+            trust: true
+          });
+        }
+      }
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  <!-- KaTeX 数学公式支持 -->
-  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-  <script>
-    // 手动初始化 KaTeX 渲染
-    document.addEventListener('DOMContentLoaded', function() {
-      renderMathInElement(document.body, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
-        ],
-        throwOnError: false
-      });
-    });
-    
-    // Docsify 页面切换后重新渲染
-    window.$docsify = window.$docsify || {};
   </script>
   
   <script>
