@@ -263,10 +263,11 @@
     }
   </script>
   
-  <!-- KaTeX 数学公式支持 (必须在 docsify 之前加载) -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- KaTeX 数学公式支持 (参考 happy-llm 配置) -->
+  <script src="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+  <script src="//cdn.jsdelivr.net/npm/marked@3"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
   
   <script>
     window.$docsify = {
@@ -274,25 +275,10 @@
       repo: 'https://github.com/howe12/every-embodied-course',
       loadSidebar: true,
       subMaxLevel: 0,
-      auto2top: true,
-      
-      // KaTeX 渲染钩子 - 页面渲染完成后重新渲染公式
-      hooks: {
-        'done': function() {
-          renderMathInElement(document.querySelector('.markdown-section'), {
-            delimiters: [
-              {left: '$$', right: '$$', display: true},
-              {left: '$', right: '$', display: false}
-            ],
-            throwOnError: false,
-            trust: true
-          });
-        }
-      }
+      auto2top: true
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  </script>
   
   <script>
     // 页面加载后强制移除sidebar标题
