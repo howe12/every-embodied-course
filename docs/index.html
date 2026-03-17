@@ -194,6 +194,22 @@
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   
   <script>
+    // 页面加载后强制移除sidebar标题
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var h1 = document.querySelector('.sidebar-nav > h1');
+        if (h1) h1.remove();
+        
+        var titles = document.querySelectorAll('.sidebar h1, .sidebar-nav h1, .docsify-sidebar h1');
+        titles.forEach(function(el) {
+          el.style.display = 'none';
+          el.remove();
+        });
+      }, 500);
+    });
+  </script>
+  
+  <script>
     function slugify(text) {
       return text.toLowerCase()
         .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s-]/g, '')
