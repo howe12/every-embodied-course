@@ -16,30 +16,28 @@
       display: none !important;
     }
     
+    /* 隐藏sidebar标题 */
+    .sidebar-nav > h1 {
+      display: none !important;
+    }
+    
     /* 左侧sidebar固定 */
     .sidebar-nav {
       position: fixed !important;
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      padding-top: 100px; /* 为搜索框留出足够空间 */
     }
     
-    /* 搜索框区域 - 固定在顶部 */
+    /* 搜索框区域 - 正常显示在目录顶部 */
     .sidebar-nav .search {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      padding: 10px;
-      background: #fff;
-      box-sizing: border-box;
-      z-index: 15;
       display: block !important;
+      padding: 12px;
+      background: #fff;
       border-bottom: 1px solid #eee;
     }
     
-    /* 搜索框输入框样式 */
+    /* 搜索框输入框 */
     .sidebar-nav .search input {
       width: 100%;
       padding: 8px 12px;
@@ -50,7 +48,7 @@
       background: #f8f9fa;
     }
     
-    /* 搜索框hover/focus效果 */
+    /* 搜索框hover/focus */
     .sidebar-nav .search input:hover,
     .sidebar-nav .search input:focus {
       border-color: var(--theme-color);
