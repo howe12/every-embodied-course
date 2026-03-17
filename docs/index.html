@@ -275,10 +275,24 @@
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  
   <!-- KaTeX 数学公式支持 -->
   <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-katex@1.1.2/dist/docsify-katex.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script>
+    // 手动初始化 KaTeX 渲染
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
+        throwOnError: false
+      });
+    });
+    
+    // Docsify 页面切换后重新渲染
+    window.$docsify = window.$docsify || {};
+  </script>
   
   <script>
     // 页面加载后强制移除sidebar标题
