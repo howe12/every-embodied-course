@@ -17,46 +17,55 @@
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      z-index: 100;
+      padding-top: 60px; /* 为搜索框和标题留空间 */
+    }
+    
+    /* 标题区域 - 显示课程名称 */
+    .sidebar-nav > h1 {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      padding: 12px 15px;
+      font-size: 15px;
+      margin: 0;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      box-sizing: border-box;
+      z-index: 20;
+      display: block !important;
     }
     
     /* 搜索框区域 */
     .sidebar-nav .search {
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 10;
+      position: fixed;
+      top: 45px;
+      left: 0;
+      width: var(--sidebar-width);
       padding: 10px;
-      margin-bottom: 5px;
+      background: #fff;
+      box-sizing: border-box;
+      z-index: 15;
+      display: block !important;
     }
     
-    /* 确保搜索框可以点击 */
+    /* 搜索框输入框样式 */
     .sidebar-nav .search input {
       width: 100%;
       padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 13px;
       box-sizing: border-box;
+      background: #f8f9fa;
     }
     
-    /* 搜索框hover效果 */
+    /* 搜索框hover/focus效果 */
+    .sidebar-nav .search input:hover,
     .sidebar-nav .search input:focus {
-      outline: none;
       border-color: var(--theme-color);
-      box-shadow: 0 0 0 2px rgba(0,151,157,0.2);
-    }
-    
-    /* 标题区域 */
-    .sidebar-nav > h1 {
-      padding: 10px 15px;
-      font-size: 15px;
-      margin: 0;
       background: #fff;
-      position: sticky;
-      top: 50px;
-      z-index: 9;
-      border-bottom: 1px solid #eee;
+      outline: none;
     }
     
     .markdown-section img {
