@@ -1,8 +1,8 @@
 <div align="center">
 
   # Every Embodied Course
-  
-  ## ROS2机器人仿真课程
+
+  ## Every-Embodied : Zero to Hero in Embodied AI
 
   > 本课程围绕 [datawhalechina/every-embodied](https://github.com/datawhalechina/every-embodied) 开展
   > 
@@ -18,7 +18,7 @@
       <a href="https://github.com/howe12/every-embodied-course/network/members" target="_blank">
           <img src="https://img.shields.io/github/forks/howe12/every-embodied-course?color=0052cc&style=for-the-badge" alt="Forks"></a>
   </p>
-  
+
   <p align="center">
     🔗 <a href="https://howe12.github.io/every-embodied-course/" target="_blank">在线访问课程</a>
   </p>
@@ -116,12 +116,12 @@ ros2 run turtlesim turtlesim_node
 
 | 姓名 | 职责 | 简介 | GitHub |
 | :--- | :--- | :--- | :--- |
-| **霍海杰** | ROS2课程维护 | ROS2机器人仿真课程维护 | [@howe12](https://github.com/howe12) |
 | **Ethan-Chen-plus** | 项目负责人 | 中国科学院大学 | [@Ethan-Chen-plus](https://github.com/Ethan-Chen-plus) |
 | **YYPro** | 第1、2、3、4章贡献者 | 中国科学院大学 | [@YYpro](https://github.com/Suibian-YY-pro) |
 | **李昀迪** | 第2、8、13章贡献者 | 北京科技大学 | [@muzilyd](https://github.com/muzilyd) |
 | **张天一** | 第8章贡献者 | 北京工业大学 | [@GodoneZ](https://github.com/GodoneZ) |
 | **陈可为** | 第5、6、7、9、10章贡献者 | 中国科学院大学 | [@Ethan-Chen-plus](https://github.com/Ethan-Chen-plus) |
+| **霍海杰** | Github Page课程贡献与维护者 | 佛山大学 | [@howe12](https://github.com/howe12) |
 
 ---
 
