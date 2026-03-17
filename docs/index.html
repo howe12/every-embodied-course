@@ -16,31 +16,40 @@
       display: none !important;
     }
     
-    /* 隐藏sidebar标题 */
-    .sidebar-nav > h1 {
-      display: none !important;
-    }
-    
     /* 左侧sidebar固定 */
     .sidebar-nav {
       position: fixed !important;
       top: 0;
       height: 100vh;
-      overflow-y: auto;
-      padding-top: 50px; /* 只为搜索框留空间 */
+      overflow-y: hidden; /* 目录不随页面滚动 */
+      display: flex;
+      flex-direction: column;
     }
     
-    /* 搜索框区域 */
-    .sidebar-nav .search {
-      position: fixed;
-      top: 45px;
-      left: 0;
-      width: var(--sidebar-width);
-      padding: 10px;
+    /* 标题区域 - 固定在顶部 */
+    .sidebar-nav > h1 {
+      position: sticky;
+      top: 0;
+      flex-shrink: 0;
+      padding: 10px 15px;
+      font-size: 14px;
+      margin: 0;
       background: #fff;
-      box-sizing: border-box;
-      z-index: 15;
+      border-bottom: 1px solid #eee;
+      z-index: 20;
       display: block !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* 搜索框区域 - 固定在标题下方 */
+    .sidebar-nav .search {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      z-index: 15;
     }
     
     /* 搜索框输入框样式 */
@@ -60,6 +69,13 @@
       border-color: var(--theme-color);
       background: #fff;
       outline: none;
+    }
+    
+    /* 目录区域 - 可滚动 */
+    .sidebar-nav > ul {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 20px;
     }
     
     .markdown-section img {
