@@ -1,0 +1,402 @@
+# 02-3 Cartpole控制算法实战
+
+> 本章对应 GitHub 课程《Cartpole建模与PID、LQR、MPC控制算法实战》，讲解倒立摆系统的建模与控制。
+
+---
+
+## 1. 引入
+
+### 1.1 什么是 Cartpole？
+
+**Cartpole（倒立摆）** 是一个经典的控制系统实验设备：
+
+```
+        ↑ 杆子（可以前后摆动）
+        |
+        |
+        |
+        |
+--------[●]-------- 小车（可以在轨道上左右移动）
+        ↓
+      轨道
+```
+
+| 中文名 | 英文名 | 说明 |
+|--------|--------|------|
+| 倒立摆 | Cartpole | 一个可移动的小车上竖着一根杆子 |
+| 杆子 | Pole | 会摆动，需要保持竖直 |
+| 小车 | Cart | 在轨道上移动，用来平衡杆子 |
+
+### 1.2 生活类比
+
+想象你**手里竖着一根竹竿**：
+
+```
+    |
+    |  ← 竹竿
+    |
+    |
+   (●)  ← 你的手
+
+竹竿往左边倒 → 手往左边推
+竹竿往右边倒 → 手往右边推
+```
+
+**目标**：让竹竿保持竖直不倒！
+
+### 1.3 控制目标
+
+Cartpole 有两个控制目标：
+
+| 目标 | 说明 |
+|------|------|
+| 保持杆子竖直 | 杆子角度 $\theta = 0$（垂直向上） |
+| 保持小车在轨道中心 | 位置 $x = 0$ |
+
+### 1.4 本章学习目标
+
+学完本章后，你将能够：
+- [ ] 理解 Cartpole 物理结构
+- [ ] 理解动力学模型（简化版）
+- [ ] 掌握 PID 控制原理并实现
+- [ ] 掌握 LQR 控制原理并实现
+- [ ] 理解 MPC 控制思想
+
+---
+
+## 2. Cartpole 物理模型
+
+### 2.1 系统参数
+
+```
+参数说明：
+- M: 小车质量 (cart mass)
+- m: 杆子质量 (pole mass)  
+- l: 杆子长度的一半 (half pole length)
+- g: 重力加速度 (gravity)
+- F: 作用在小车上的力 (force)
+- θ: 杆子角度 (pole angle)
+- x: 小车位置 (cart position)
+```
+
+### 2.2 动力学方程（简化版）
+
+> **重点**：当 $\theta$ 很小时，可以做近似处理：
+> - $\sin \theta \approx \theta$
+> - $\cos \theta \approx 1$
+
+简化后的状态空间方程：
+
+$$
+\begin{bmatrix} \dot{x} \\ \ddot{x} \\ \dot{\theta} \\ \ddot{\theta} \end{bmatrix} = 
+\begin{bmatrix} 
+0 & 1 & 0 & 0 \\
+0 & 0 & -\frac{3mg}{m+4M} & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & \frac{3g(M+m)}{l(m+4M)} & 0
+\end{bmatrix}
+\begin{bmatrix} x \\ \dot{x} \\ \theta \\ \dot{\theta} \end{bmatrix}
++
+\begin{bmatrix} 0 \\ \frac{1}{m+M}+\frac{3m}{m+4M} \\ 0 \\ -\frac{3}{l(m+4M)} \end{bmatrix}F
+$$
+
+> **难点**：这是线性化的模型，实际控制时需要考虑非线性因素
+
+### 2.3 状态变量
+
+Cartpole 的状态用 **4个变量** 表示：
+
+| 状态 | 符号 | 物理意义 |
+|------|------|----------|
+| 位置 | $x$ | 小车在轨道上的位置 |
+| 速度 | $\dot{x}$ | 小车移动速度 |
+| 角度 | $\theta$ | 杆子偏离垂直方向的角度 |
+| 角速度 | $\dot{\theta}$ | 杆子摆动速度 |
+
+---
+
+## 3. PID 控制
+
+### 3.1 什么是 PID？
+
+**PID** 是最经典的控制算法，就像你开车时：
+
+| 缩写 | 全称 | 作用 | 开车类比 |
+|------|------|------|----------|
+| **P** | Proportional（比例） | 偏离目标越多，纠正力度越大 | 看到偏离就转动方向盘 |
+| **I** | Integral（积分） | 消除长期误差 | 持续微调方向 |
+| **D** | Derivative（微分） | 抑制过度摆动 | 速度太快时松油门 |
+
+### 3.2 PID 公式
+
+$$
+u(t) = K_p e(t) + K_i \int e(t)dt + K_d \frac{de(t)}{dt}
+$$
+
+| 参数 | 作用 | 调大后的效果 |
+|------|------|--------------|
+| $K_p$ | 比例增益 | 响应更快，但可能超调 |
+| $K_i$ | 积分增益 | 消除稳态误差，但可能振荡 |
+| $K_d$ | 微分增益 | 减少超调，更平滑 |
+
+### 3.3 Cartpole 的 PID 控制
+
+我们只需要 **PD 控制**（不需要积分项）：
+
+```python
+def pid_control(error, error_dot, kp, kd):
+    """
+    PD 控制
+    error: 当前误差
+    error_dot: 误差变化率（导数）
+    kp: 比例系数
+    kd: 微分系数
+    """
+    output = kp * error + kd * error_dot
+    return output
+```
+
+### 3.4 双环 PID 控制
+
+Cartpole 需要两个控制器：
+
+| 控制器 | 输入 | 输出 |
+|--------|------|------|
+| **小车位置环** | 位置误差 | 小车速度修正 |
+| **杆子角度环** | 角度误差 | 小车加速度修正 |
+
+```python
+# 角度环（保持杆子竖直）
+angle_error = pole_angle - 0  # 目标角度是0（竖直）
+angle_output = pid_control(angle_error, pole_velocity, kp_angle, kd_angle)
+
+# 位置环（保持小车在中心）
+position_error = cart_position - 0  # 目标位置是0（中心）
+position_output = pid_control(position_error, cart_velocity, kp_pos, kd_pos)
+
+# 总输出
+force = angle_output + position_output
+```
+
+> **重点**：角度环是**主控制器**，决定能否保持平衡；位置环是**辅助控制器**，让小车保持在轨道中央
+
+### 3.5 实践：运行 PID 控制
+
+```python
+# 安装依赖
+pip install gymnasium
+
+# 运行 PID 控制
+import gymnasium as env
+import numpy as np
+
+env = env.make("CartPole-v1")
+
+# PD 控制参数
+kp_angle = 50.0   # 角度比例
+kd_angle = 10.0   # 角度微分
+kp_pos = 1.0      # 位置比例
+kd_pos = 1.0     # 位置微分
+
+state, _ = env.reset()
+total_reward = 0
+
+for step in range(500):
+    cart_pos, cart_vel, pole_angle, pole_vel = state
+    
+    # 角度环 PD 控制
+    angle_output = kp_angle * pole_angle + kd_angle * pole_vel
+    
+    # 位置环 PD 控制  
+    pos_output = kp_pos * cart_pos + kd_pos * cart_vel
+    
+    # 总输出力
+    force = angle_output + pos_output
+    action = 1 if force > 0 else 0
+    
+    state, reward, terminated, truncated, _ = env.step(action)
+    total_reward += reward
+    
+    if terminated or truncated:
+        break
+
+print(f"总奖励: {total_reward}")
+```
+
+> **重点**：PID 控制简单易实现，但参数需要手动调节
+
+---
+
+## 4. LQR 控制
+
+### 4.1 什么是 LQR？
+
+**LQR (Linear Quadratic Regulator)** = 线性二次型调节器
+
+| 特点 | 说明 |
+|------|------|
+| **线性** | 基于线性模型 |
+| **二次型** | 优化目标是二次函数（平方和） |
+| **调节器** | 自动计算最优控制增益 |
+
+### 4.2 LQR 核心思想
+
+**目标**：找到最优控制力 $u$，使得以下代价最小：
+
+$$
+J = \sum_{k=0}^{\infty} (x^T Q x + u^T R u)
+$$
+
+| 符号 | 含义 |
+|------|------|
+| $x$ | 状态误差（如位置、角度） |
+| $u$ | 控制力（如电机推力） |
+| $Q$ | 状态权重矩阵（越大表示越看重） |
+| $R$ | 控制权重矩阵（越大表示越不想用力） |
+
+### 4.3 LQR 求解步骤
+
+1. **求解黎卡提方程**：得到最优状态反馈矩阵 $P$
+2. **计算反馈增益**：$K = R^{-1} B^T P$
+3. **计算控制输入**：$u = -K x$
+
+> **难点**：需要解矩阵方程，但有现成库可用
+
+### 4.4 实践：运行 LQR 控制
+
+```python
+import numpy as np
+from scipy import linalg
+
+# 系统参数
+M = 1.0      # 小车质量
+m = 0.1      # 杆子质量
+l = 0.5      # 杆子半长
+g = 9.8      # 重力加速度
+dt = 0.01    # 时间步长
+
+# 状态矩阵 A（线性化）
+A = np.eye(4) + dt * np.array([
+    [0, 1, 0, 0],
+    [0, 0, -3*m*g/(m+4*M), 0],
+    [0, 0, 0, 1],
+    [0, 0, 3*(M+m)*g/(l*(m+4*M)), 0]
+])
+
+# 控制矩阵 B
+B = dt * np.array([
+    [0],
+    [1/(M+m) + 3*m/(m+4*M)],
+    [0],
+    [-3/(l*(m+4*M))]
+])
+
+# 权重矩阵
+Q = np.diag([1, 1, 10, 10])  # 状态权重：角度比位置重要
+R = np.array([[1]])           # 控制权重
+
+# 求解黎卡提方程
+P = linalg.solve_discrete_are(A, B, Q, R)
+
+# 计算反馈增益 K
+K = np.linalg.inv(B.T @ P @ B + R) @ (B.T @ P @ A)
+
+print("LQR 反馈增益:", K)
+```
+
+### 4.5 LQR vs PID
+
+| 对比 | PID | LQR |
+|------|-----|-----|
+| **原理** | 经验公式 | 最优化理论 |
+| **参数调节** | 手动试凑 | 自动计算 |
+| **稳定性** | 依赖经验 | 数学保证 |
+| **计算量** | 小 | 中 |
+
+> **重点**：LQR 基于模型，能得到最优控制；PID 简单直接，但需要经验调参
+
+---
+
+## 5. MPC 控制（选学）
+
+### 5.1 什么是 MPC？
+
+**MPC (Model Predictive Control)** = 模型预测控制
+
+核心思想：**向前看几步，选择最优路径**
+
+```
+现在 ────── 预测 ────── 未来
+   │          │          │
+   │    N步预测    │   优化选择
+   │          │          │
+  执行   选择最优控制序列
+```
+
+### 5.2 MPC 三大核心
+
+| 步骤 | 说明 |
+|------|------|
+| **预测模型** | 根据当前状态，预测未来N步的状态 |
+| **滚动优化** | 每步都重新计算最优控制序列 |
+| **反馈校正** | 用实际测量修正预测 |
+
+### 5.3 MPC vs LQR
+
+| 对比 | LQR | MPC |
+|------|-----|-----|
+| **预测** | 只看当前 | 向前看N步 |
+| **计算量** | 小 | 大 |
+| **适用场景** | 简单系统 | 复杂约束系统 |
+
+> **难点**：MPC 计算量大，需要求解优化问题（QP）
+
+---
+
+## 6. 三种控制对比
+
+| 控制方法 | 优点 | 缺点 | 适用场景 |
+|----------|------|------|----------|
+| **PID** | 简单、不需要模型 | 依赖调参、效果一般 | 简单系统、入门 |
+| **LQR** | 最优解、理论保证 | 需要精确模型 | 线性系统 |
+| **MPC** | 可处理约束、向前看 | 计算量大 | 复杂系统 |
+
+---
+
+## 7. 练习题
+
+### 基础题
+
+1. **概念理解**：Cartpole 的控制目标是什么？
+2. **PID 参数**：如果杆子晃动太大，应该增大还是减小 $K_d$？
+3. **LQR 权重**：如果只想让杆子保持竖直，不在乎小车位置，Q矩阵应该怎么设置？
+
+### 进阶题
+
+4. **代码实践**：修改 PID 参数，让杆子能保持更长时间不倒
+5. **对比实验**：比较 PID 和 LQR 的控制效果
+6. **思考**：如果给 LQR 添加约束（限制最大力），应该选择哪种控制方法？
+
+---
+
+## 本章小结
+
+| 概念 | 说明 |
+|------|------|
+| Cartpole | 倒立摆，小车上竖杆子 |
+| 状态变量 | $x, \dot{x}, \theta, \dot{\theta}$ |
+| PID | 比例-积分-微分控制 |
+| LQR | 线性二次型调节器，自动计算最优增益 |
+| MPC | 模型预测控制，向前看N步 |
+
+---
+
+## 参考资料
+
+- GitHub: https://github.com/datawhalechina/every-embodied
+- OpenAI Gym: https://gymnasium.farama.org/
+- 控制理论: 《现代控制工程》
+
+---
+
+*学完本章，你已经掌握了经典控制理论的三种方法！下一章我们将学习更高级的控制算法。*
