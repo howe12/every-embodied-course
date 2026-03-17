@@ -16,24 +16,19 @@
       display: none !important;
     }
     
-    /* 隐藏sidebar标题 */
-    .sidebar-nav > h1 {
-      display: none !important;
-    }
-    
     /* 左侧sidebar固定 */
     .sidebar-nav {
       position: fixed !important;
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      padding-top: 50px; /* 只为搜索框留空间 */
+      padding-top: 100px; /* 为搜索框留出足够空间 */
     }
     
-    /* 搜索框区域 */
+    /* 搜索框区域 - 固定在顶部 */
     .sidebar-nav .search {
       position: fixed;
-      top: 45px;
+      top: 0;
       left: 0;
       width: var(--sidebar-width);
       padding: 10px;
@@ -41,6 +36,7 @@
       box-sizing: border-box;
       z-index: 15;
       display: block !important;
+      border-bottom: 1px solid #eee;
     }
     
     /* 搜索框输入框样式 */
