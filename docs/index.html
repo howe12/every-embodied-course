@@ -17,8 +17,15 @@
     }
     
     /* 隐藏sidebar标题 */
-    .sidebar-nav > h1 {
+    .sidebar-nav > h1,
+    .sidebar-nav h1,
+    div.sidebar-nav > h1,
+    section.sidebar > h1 {
       display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
     }
     
     /* 左侧sidebar固定 */
