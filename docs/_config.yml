@@ -1,0 +1,8 @@
+# Docsify Configuration
+name: Every Embodied Course
+repo: https://github.com/howe12/every-embodied-course
+
+# 忽略的目录（不会在页面显示）
+exclude:
+  - 待整理
+  - "**/待整理/**"
