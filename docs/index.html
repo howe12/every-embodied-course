@@ -8,7 +8,7 @@
   <style>
     :root { 
       --theme-color: #00979d;
-      --sidebar-width: 240px;
+      --sidebar-width: 220px;
     }
     
     /* 让左侧sidebar固定不随页面滚动 */
@@ -17,24 +17,18 @@
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      padding-top: 50px; /* 为顶部标题留出空间 */
     }
     
-    /* 搜索框固定在顶部 */
-    .sidebar-nav .search {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      background: #fff;
-      z-index: 10;
-      padding: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* sidebar内部的搜索框和标题区域下移 */
+    .sidebar-nav > .search,
+    .sidebar-nav > h1,
+    .sidebar-nav > div:not(.sidebar-nav):not(ul):not(.search) {
+      margin-top: 0 !important;
     }
     
-    /* 搜索框下面的内容区域 */
-    .sidebar-nav > .sections {
-      margin-top: 60px;
+    /* 整个sidebar内容区域添加顶部padding */
+    .sidebar-nav > *:first-child {
+      margin-top: 50px !important;
     }
     
     .markdown-section img {
@@ -166,7 +160,7 @@
     
     .markdown-section {
       padding-right: 220px;
-      padding-left: 260px;
+      padding-left: 235px;
     }
     
     @media (max-width: 1200px) {
