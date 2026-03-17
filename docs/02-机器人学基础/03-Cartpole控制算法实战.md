@@ -79,7 +79,141 @@ Cartpole 有两个控制目标：
 - x: 小车位置 (cart position)
 ```
 
-### 2.2 动力学方程（简化版）
+### 2.2 动力学方程推导
+
+> 这部分可能有点难，可以先跳过，等后面理解透了再回来看看。
+
+#### 2.2.1 先从受力分析开始
+
+想象一个Cartpole系统：
+
+```
+        ↑ θ
+        |
+        |  ← 杆子（质量m，长度2l）
+        |
+--------[●]-------- ← 小车（质量M）
+        F → ← 施加的力
+```
+
+我们需要分析两个物体的受力：
+1. **小车**的受力
+2. **杆子**的受力
+
+#### 2.2.2 小车的受力分析
+
+小车受到：
+- 外力 $F$（电机推力）
+- 杆子对小车的拉力（通过连接处）
+
+设杆子对小车的拉力在水平方向分量为 $F_x$，垂直方向分量为 $F_y$：
+
+根据牛顿第二定律（小车）：
+$$M\ddot{x} = F - F_x$$
+
+#### 2.2.3 杆子的受力分析
+
+杆子的受力更复杂：
+- 受到重力 $mg$（向下）
+- 受到小车对它的力
+
+杆子的运动有两种：
+1. 质心平移运动
+2. 绕质心转动
+
+对杆子质心应用牛顿第二定律：
+$$m\ddot{x}_{cm} = F_x$$
+
+其中 $\ddot{x}_{cm}$ 是杆子质心的加速度。
+
+但杆子质心位置和小车有关：
+$$\ddot{x}_{cm} = \ddot{x} + l\ddot{\theta}\cos\theta - l\dot{\theta}^2\sin\theta$$
+
+#### 2.2.4 力矩分析（绕杆子质心）
+
+杆子绕质心的转动方程：
+$$I\ddot{\theta} = \tau$$
+
+其中：
+- $I = \frac{1}{3}m(2l)^2 = \frac{4}{3}ml^2$（杆子绕质心的转动惯量）
+- $\tau$ 是合力矩
+
+绕质心的力矩来自重力：
+$$\tau = -mg \cdot l\sin\theta$$
+
+> **难点**：这里用到了力矩 = 力 × 力臂
+
+所以：
+$$\frac{4}{3}ml^2\ddot{\theta} = -mgl\sin\theta$$
+
+整理得：
+$$\ddot{\theta} = -\frac{3g}{4l}\sin\theta$$
+
+#### 2.2.5 完整的动力学方程
+
+把上面几个方程联立求解，得到**精确的非线性方程**（不简化）：
+
+$$
+\ddot{x} = \frac{F + ml\dot{\theta}^2\sin\theta - \frac{m^2l^2g\sin\theta\cos\theta}{M+m}}{\frac{4}{3}M + m - \frac{m^2\cos^2\theta}{M+m}}
+$$
+
+$$
+\ddot{\theta} = \frac{g\sin\theta - \cos\theta \cdot \frac{F + ml\dot{\theta}^2\sin\theta}{M+m}}{l\left(\frac{4}{3} - \frac{m\cos^2\theta}{M+m}\right)}
+$$
+
+> **难点**：这两个公式很复杂，直接用的话很难控制
+
+#### 2.2.6 线性化近似（简化！）
+
+**为什么需要简化？**
+- 非线性方程难以分析
+- 控制器设计困难
+
+**近似的条件**：当 $\theta$ 很小时（杆子接近竖直）
+
+做以下近似：
+$$\sin\theta \approx \theta$$
+$$\cos\theta \approx 1$$
+$$\dot{\theta}^2 \approx 0$$
+
+代入简化后，得到**线性化的动力学方程**：
+
+$$
+\begin{cases}
+\ddot{x} = \left(\frac{1}{M+m} + \frac{3m}{M+4m}\right)F - \frac{3mg}{M+4m}\theta \\
+\ddot{\theta} = \frac{3(M+m)g}{l(M+4m)}\theta - \frac{3}{l(M+4m)}F
+\end{cases}
+$$
+
+这就是我们最终使用的简化模型！
+
+#### 2.2.7 写成状态空间形式
+
+定义状态向量：
+$$x = \begin{bmatrix} x \\ \dot{x} \\ \theta \\ \dot{\theta} \end{bmatrix}$$
+
+得到状态空间方程：
+$$
+\dot{x} = Ax + Bu
+$$
+
+其中：
+$$
+A = \begin{bmatrix} 
+0 & 1 & 0 & 0 \\
+0 & 0 & -\frac{3mg}{M+4m} & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & \frac{3(M+m)g}{l(M+4m)} & 0
+\end{bmatrix},
+\quad
+B = \begin{bmatrix} 0 \\ \frac{1}{M+m}+\frac{3m}{M+4m} \\ 0 \\ -\frac{3}{l(M+4m)} \end{bmatrix}
+$$
+
+> **重点**：这就是LQR和MPC控制中使用的模型！
+
+---
+
+### 2.3 动力学方程（简化版）
 
 > **重点**：当 $\theta$ 很小时，可以做近似处理：
 > - $\sin \theta \approx \theta$
