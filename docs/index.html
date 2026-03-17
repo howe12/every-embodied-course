@@ -11,24 +11,52 @@
       --sidebar-width: 220px;
     }
     
-    /* 让左侧sidebar固定不随页面滚动 */
+    /* 左侧sidebar固定 */
     .sidebar-nav {
       position: fixed !important;
       top: 0;
       height: 100vh;
       overflow-y: auto;
+      z-index: 100;
     }
     
-    /* sidebar内部的搜索框和标题区域下移 */
-    .sidebar-nav > .search,
-    .sidebar-nav > h1,
-    .sidebar-nav > div:not(.sidebar-nav):not(ul):not(.search) {
-      margin-top: 0 !important;
+    /* 搜索框区域 */
+    .sidebar-nav .search {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+      padding: 10px;
+      margin-bottom: 5px;
     }
     
-    /* 整个sidebar内容区域添加顶部padding */
-    .sidebar-nav > *:first-child {
-      margin-top: 50px !important;
+    /* 确保搜索框可以点击 */
+    .sidebar-nav .search input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    /* 搜索框hover效果 */
+    .sidebar-nav .search input:focus {
+      outline: none;
+      border-color: var(--theme-color);
+      box-shadow: 0 0 0 2px rgba(0,151,157,0.2);
+    }
+    
+    /* 标题区域 */
+    .sidebar-nav > h1 {
+      padding: 10px 15px;
+      font-size: 15px;
+      margin: 0;
+      background: #fff;
+      position: sticky;
+      top: 50px;
+      z-index: 9;
+      border-bottom: 1px solid #eee;
     }
     
     .markdown-section img {
