@@ -16,29 +16,18 @@
       display: none !important;
     }
     
+    /* 隐藏sidebar标题 */
+    .sidebar-nav > h1 {
+      display: none !important;
+    }
+    
     /* 左侧sidebar固定 */
     .sidebar-nav {
       position: fixed !important;
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      padding-top: 60px; /* 为搜索框和标题留空间 */
-    }
-    
-    /* 标题区域 - 显示课程名称 */
-    .sidebar-nav > h1 {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      padding: 12px 15px;
-      font-size: 15px;
-      margin: 0;
-      background: #fff;
-      border-bottom: 1px solid #eee;
-      box-sizing: border-box;
-      z-index: 20;
-      display: block !important;
+      padding-top: 50px; /* 只为搜索框留空间 */
     }
     
     /* 搜索框区域 */
