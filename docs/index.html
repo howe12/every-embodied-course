@@ -163,6 +163,16 @@
     .toc-h2 { font-weight: 600; font-size: 12px; color: #333; }
     .toc-h3 { padding-left: 10px; font-size: 11px; }
     
+    /* 手机端菜单按钮 - 默认隐藏 */
+    .mobile-menu-btn {
+      display: none;
+    }
+    
+    /* 手机端遮罩层 - 默认隐藏 */
+    .sidebar-overlay {
+      display: none;
+    }
+    
     .markdown-section {
       padding-right: 220px;
       padding-left: 235px;
@@ -172,15 +182,86 @@
       .toc-right { display: none; }
       .markdown-section { padding-right: 20px; }
     }
+    
+    /* 手机端适配（屏幕宽度 < 768px） */
+    @media (max-width: 768px) {
+      /* 隐藏整个左侧sidebar */
+      .sidebar-nav {
+        transform: translateX(-100%) !important;
+        width: 200px !important;
+        transition: transform 0.3s ease;
+      }
+      
+      /* 显示侧边栏时的状态 */
+      .sidebar-nav.open {
+        transform: translateX(0) !important;
+      }
+      
+      /* 内容区全宽 */
+      .markdown-section {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+      
+      /* 添加汉堡菜单按钮 */
+      .mobile-menu-btn {
+        display: block !important;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        background: var(--theme-color);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      
+      /* 遮罩层 */
+      .sidebar-overlay {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- 手机端菜单按钮 -->
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">☰ 目录</button>
+  <!-- 手机端遮罩层 -->
+  <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+  
   <div id="app">加载中...</div>
   
   <div class="toc-right" id="toc">
     <h4>📑 文章目录</h4>
     <div id="toc-content"></div>
   </div>
+  
+  <script>
+    // 手机端侧边栏切换
+    function toggleSidebar() {
+      var sidebar = document.querySelector('.sidebar-nav');
+      if (sidebar) {
+        sidebar.classList.toggle('open');
+      }
+    }
+    
+    function closeSidebar() {
+      var sidebar = document.querySelector('.sidebar-nav');
+      if (sidebar) {
+        sidebar.classList.remove('open');
+      }
+    }
+  </script>
   
   <script>
     window.$docsify = {
