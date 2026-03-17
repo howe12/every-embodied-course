@@ -4,27 +4,11 @@
   <meta charset="UTF-8">
   <title>Every Embodied Course - ROS2机器人仿真课程</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- 主题CSS -->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
   
-  <!-- KaTeX 公式居中样式 -->
-  <style>
-    .markdown-section img {
-      display: block;
-      margin: 0 auto;
-    }
-    
-    /* 公式居中 */
-    .katex-display {
-      display: block !important;
-      text-align: center !important;
-      margin: 1em 0 !important;
-    }
-    
-    /* 行内公式也居中处理 */
-    .katex {
-      text-align: center !important;
-    }
-  </style>
+  <!-- 自定义样式 -->
   <style>
     :root { 
       --theme-color: #00979d;
@@ -32,20 +16,12 @@
     }
     
     /* 隐藏sidebar展开/折叠按钮 */
-    .sidebar-toggle {
-      display: none !important;
-    }
+    .sidebar-toggle { display: none !important; }
     
     /* 隐藏sidebar标题 */
-    .sidebar-nav > h1,
-    .sidebar-nav h1,
-    div.sidebar-nav > h1,
-    section.sidebar > h1 {
+    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1 {
       display: none !important;
       visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      overflow: hidden !important;
     }
     
     /* 左侧sidebar固定 */
@@ -56,6 +32,7 @@
       overflow-y: auto;
     }
     
+    /* 图片居中 */
     .markdown-section img {
       display: block;
       margin: 0 auto;
@@ -63,36 +40,10 @@
       max-height: 500px;
     }
     
-    /* 图片图注居中 */
-    .markdown-section p img + em,
-    .markdown-section p img + strong,
-    .markdown-section p:has(img) + p,
-    .markdown-section p img ~ p:not(:has(img)) {
-      text-align: center;
-      color: #666;
-      font-size: 12px;
-      font-style: normal;
-      margin-top: 8px;
-      display: block;
-    }
+    /* 表格居中 */
+    .markdown-section table { margin: 0 auto; max-width: 100%; }
     
-    /* 引用格式的图注 */
-    .markdown-section p img + blockquote {
-      text-align: center;
-      color: #666;
-      font-size: 12px;
-      font-style: normal;
-      margin-top: 8px;
-      border-left: none;
-      padding: 0;
-    }
-    
-    .markdown-section table {
-      margin: 0 auto;
-      max-width: 100%;
-    }
-    
-    /* 左侧侧边栏 - 一级标题和首页 */
+    /* 侧边栏样式 */
     .sidebar-nav > ul > li > a {
       font-size: 14px;
       font-weight: 600;
@@ -101,37 +52,40 @@
       border-left: 3px solid transparent;
       margin: 2px 8px;
     }
-    
     .sidebar-nav > ul > li > a:hover {
       background: rgba(0,151,157,0.1);
       border-left-color: var(--theme-color);
       color: var(--theme-color);
     }
-    
     .sidebar-nav ul ul li a {
       font-size: 14px;
       color: #555;
       padding: 8px 20px 8px 35px;
     }
-    
-    .sidebar-nav ul ul li a:hover {
-      color: var(--theme-color);
-    }
-    
+    .sidebar-nav ul ul li a:hover { color: var(--theme-color); }
     .sidebar-nav ul ul li a.active {
       color: var(--theme-color);
       background: rgba(0,151,157,0.12);
       border-left: 3px solid var(--theme-color);
       font-weight: 600;
     }
+    .sidebar-nav ul ul ul { display: none; }
     
-    .sidebar-nav ul ul ul {
-      display: none;
+    /* 内容区padding */
+    .markdown-section { padding-right: 220px; padding-left: 235px; }
+    
+    @media (max-width: 1200px) {
+      .markdown-section { padding-right: 20px; }
     }
     
-    .search { margin: 15px; }
-    .search input { border-radius: 8px; padding: 8px 15px; }
+    /* 手机端适配 */
+    @media (max-width: 768px) {
+      .sidebar-nav { transform: translateX(-100%) !important; width: 200px !important; }
+      .sidebar-nav.open { transform: translateX(0) !important; }
+      .markdown-section { padding-left: 20px !important; padding-right: 20px !important; }
+    }
     
+    /* 目录插件样式 */
     .toc-right {
       position: fixed;
       right: 15px;
@@ -146,149 +100,27 @@
       font-size: 13px;
       z-index: 100;
     }
-    
-    .toc-right h4 {
-      font-size: 13px;
-      font-weight: 600;
-      margin: 0 0 8px 0;
-      color: #333;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 6px;
-    }
-    
-    .toc-right ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .toc-right li {
-      margin: 4px 0;
-    }
-    
-    .toc-right a {
-      color: #666;
-      text-decoration: none;
-      font-size: 12px;
-      display: block;
-      padding: 2px 6px;
-      border-radius: 3px;
-    }
-    
-    .toc-right a:hover {
-      color: var(--theme-color);
-      background: rgba(0,151,157,0.1);
-    }
-    
+    .toc-right h4 { font-size: 13px; font-weight: 600; margin: 0 0 8px 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .toc-right ul { list-style: none; padding: 0; margin: 0; }
+    .toc-right li { margin: 4px 0; }
+    .toc-right a { color: #666; text-decoration: none; font-size: 12px; display: block; padding: 2px 6px; border-radius: 3px; }
+    .toc-right a:hover { color: var(--theme-color); background: rgba(0,151,157,0.1); }
     .toc-h2 { font-weight: 600; font-size: 12px; color: #333; }
     .toc-h3 { padding-left: 10px; font-size: 11px; }
-    
-    /* 手机端菜单按钮 - 默认隐藏 */
-    .mobile-menu-btn {
-      display: none;
-    }
-    
-    /* 手机端遮罩层 - 默认隐藏 */
-    .sidebar-overlay {
-      display: none;
-    }
-    
-    .markdown-section {
-      padding-right: 220px;
-      padding-left: 235px;
-    }
-    
-    @media (max-width: 1200px) {
-      .toc-right { display: none; }
-      .markdown-section { padding-right: 20px; }
-    }
-    
-    /* 手机端适配（屏幕宽度 < 768px） */
-    @media (max-width: 768px) {
-      /* 隐藏整个左侧sidebar */
-      .sidebar-nav {
-        transform: translateX(-100%) !important;
-        width: 200px !important;
-        transition: transform 0.3s ease;
-      }
-      
-      /* 显示侧边栏时的状态 */
-      .sidebar-nav.open {
-        transform: translateX(0) !important;
-      }
-      
-      /* 内容区全宽 */
-      .markdown-section {
-        padding-left: 20px !important;
-        padding-right: 20px !important;
-      }
-      
-      /* 添加汉堡菜单按钮 */
-      .mobile-menu-btn {
-        display: block !important;
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 1000;
-        background: var(--theme-color);
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-      
-      /* 遮罩层 */
-      .sidebar-overlay {
-        display: block !important;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
-      }
-    }
+    @media (max-width: 1200px) { .toc-right { display: none; } }
   </style>
 </head>
+
 <body>
-  <!-- 手机端菜单按钮 -->
-  <button class="mobile-menu-btn" onclick="toggleSidebar()">☰ 目录</button>
-  <!-- 手机端遮罩层 -->
-  <div class="sidebar-overlay" onclick="closeSidebar()"></div>
-  
   <div id="app">加载中...</div>
   
+  <!-- 右侧目录 -->
   <div class="toc-right" id="toc">
     <h4>📑 文章目录</h4>
     <div id="toc-content"></div>
   </div>
   
-  <script>
-    // 手机端侧边栏切换
-    function toggleSidebar() {
-      var sidebar = document.querySelector('.sidebar-nav');
-      if (sidebar) {
-        sidebar.classList.toggle('open');
-      }
-    }
-    
-    function closeSidebar() {
-      var sidebar = document.querySelector('.sidebar-nav');
-      if (sidebar) {
-        sidebar.classList.remove('open');
-      }
-    }
-  </script>
-  
-  <!-- KaTeX 数学公式支持 (参考 happy-llm 配置) -->
-  <script src="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
-  <script src="//cdn.jsdelivr.net/npm/marked@3"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
-  
+  <!-- Docsify 配置（必须在加载 docsify 之前） -->
   <script>
     window.$docsify = {
       name: 'Every Embodied Course',
@@ -298,24 +130,23 @@
       auto2top: true
     }
   </script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   
-  <script>
-    // 页面加载后强制移除sidebar标题
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(function() {
-        var h1 = document.querySelector('.sidebar-nav > h1');
-        if (h1) h1.remove();
-        
-        var titles = document.querySelectorAll('.sidebar h1, .sidebar-nav h1, .docsify-sidebar h1');
-        titles.forEach(function(el) {
-          el.style.display = 'none';
-          el.remove();
-        });
-      }, 500);
-    });
-  </script>
+  <!-- Docsify 核心（使用.min.js压缩版） -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@latest/lib/docsify.min.js"></script>
   
+  <!-- 图片放大插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  
+  <!-- 复制代码插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code"></script>
+  
+  <!-- KaTeX 公式支持（关键：必须在 docsify 之后加载） -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@3"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
+  
+  <!-- 目录生成脚本 -->
   <script>
     function slugify(text) {
       return text.toLowerCase()
@@ -336,23 +167,13 @@
       }
       
       var html = '<ul>';
-      
-      headings.forEach(function(h, i) {
+      headings.forEach(function(h) {
         var tag = h.tagName.toLowerCase();
         var cls = tag === 'h2' ? 'toc-h2' : 'toc-h3';
         var text = h.textContent.trim();
         
-        var anchor = h.querySelector('a.anchor');
-        var anchorId = '';
-        
-        if (anchor) {
-          anchorId = anchor.getAttribute('href').replace('#', '');
-        } else if (h.id) {
-          anchorId = h.id;
-        } else {
-          anchorId = slugify(text);
-          h.id = anchorId;
-        }
+        var anchorId = h.id || slugify(text);
+        if (!h.id) h.id = anchorId;
         
         html += '<li class="' + cls + '"><a href="#' + anchorId + '">' + text + '</a></li>';
       });
@@ -361,21 +182,16 @@
       content.innerHTML = html;
     }
     
-    function setupListeners() {
-      setTimeout(initTOC, 800);
-      window.addEventListener('hashchange', function() {
-        setTimeout(initTOC, 800);
-      });
-      window.addEventListener('popstate', function() {
-        setTimeout(initTOC, 800);
-      });
-    }
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupListeners);
-    } else {
-      setupListeners();
-    }
+    setTimeout(initTOC, 1000);
+    window.addEventListener('hashchange', function() { setTimeout(initTOC, 800); });
+  </script>
+  
+  <!-- 移除 sidebar 标题 -->
+  <script>
+    setTimeout(function() {
+      var h1 = document.querySelector('.sidebar-nav > h1');
+      if (h1) h1.style.display = 'none';
+    }, 500);
   </script>
 </body>
 </html>
