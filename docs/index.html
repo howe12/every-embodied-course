@@ -172,6 +172,61 @@
       .toc-right { display: none; }
       .markdown-section { padding-right: 20px; }
     }
+    
+    /* 手机端适配（屏幕宽度 < 768px） */
+    @media (max-width: 768px) {
+      :root {
+        --sidebar-width: 180px !important;
+      }
+      
+      .sidebar-nav {
+        width: 180px !important;
+      }
+      
+      .markdown-section {
+        padding-left: 195px !important;
+        padding-right: 15px !important;
+      }
+      
+      /* 手机端目录字体缩小 */
+      .sidebar-nav > ul > li > a {
+        font-size: 12px;
+        padding: 6px 10px 6px 15px;
+      }
+      
+      .sidebar-nav ul ul li a {
+        font-size: 11px;
+        padding: 5px 10px 5px 15px;
+      }
+    }
+    
+    /* 更小的手机（屏幕宽度 < 480px） */
+    @media (max-width: 480px) {
+      :root {
+        --sidebar-width: 140px !important;
+      }
+      
+      .sidebar-nav {
+        width: 140px !important;
+        font-size: 11px !important;
+      }
+      
+      .markdown-section {
+        padding-left: 155px !important;
+        padding-right: 10px !important;
+        font-size: 14px;
+      }
+      
+      .sidebar-nav > ul > li > a {
+        font-size: 11px;
+        padding: 5px 8px 5px 10px;
+      }
+      
+      .sidebar-nav ul ul li a {
+        font-size: 10px;
+        padding: 4px 8px 4px 10px;
+      }
+    }
   </style>
 </head>
 <body>
