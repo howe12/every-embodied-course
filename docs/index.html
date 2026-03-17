@@ -8,7 +8,7 @@
   <style>
     :root { 
       --theme-color: #00979d;
-      --sidebar-width: 280px;
+      --sidebar-width: 240px;
     }
     
     /* 让左侧sidebar固定不随页面滚动 */
@@ -17,16 +17,24 @@
       top: 0;
       height: 100vh;
       overflow-y: auto;
+      padding-top: 50px; /* 为顶部标题留出空间 */
     }
     
-    /* 为main内容添加左侧padding，防止被sidebar遮挡 */
-    .main-nav {
-      padding-left: var(--sidebar-width);
+    /* 搜索框固定在顶部 */
+    .sidebar-nav .search {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      background: #fff;
+      z-index: 10;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    /* body内容区域 */
-    body > section {
-      padding-left: var(--sidebar-width);
+    /* 搜索框下面的内容区域 */
+    .sidebar-nav > .sections {
+      margin-top: 60px;
     }
     
     .markdown-section img {
@@ -158,7 +166,7 @@
     
     .markdown-section {
       padding-right: 220px;
-      padding-left: 300px;
+      padding-left: 260px;
     }
     
     @media (max-width: 1200px) {
