@@ -1,4 +1,4 @@
-# 02-3 Cartpole控制算法实战
+# 02-5 Cartpole控制算法实战
 
 > 本章对应 GitHub 课程《Cartpole建模与PID、LQR、MPC控制算法实战》，讲解倒立摆系统的建模与控制。
 
