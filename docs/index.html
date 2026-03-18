@@ -17,8 +17,15 @@
     /* 隐藏sidebar展开/折叠按钮 */
     .sidebar-toggle { display: none !important; }
     
-    /* 隐藏sidebar标题 */
-    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1 {
+    /* 隐藏sidebar顶部大标题 */
+    .sidebar-nav > h1,
+    .sidebar-nav h1,
+    div.sidebar-nav > h1,
+    section.sidebar > h1,
+    .sidebar-nav > p,
+    .sidebar .app-name,
+    .sidebar-nav .app-name-link,
+    .sidebar-nav > div:first-child {
       display: none !important;
       visibility: hidden !important;
     }
@@ -128,7 +135,7 @@
   <!-- Docsify 配置 -->
   <script>
     window.$docsify = {
-      name: 'Every Embodied Course',
+      name: '',
       repo: 'https://github.com/howe12/every-embodied-course',
       loadSidebar: true,
       subMaxLevel: 0,
