@@ -42,24 +42,31 @@
     /* 表格居中 */
     .markdown-section table { margin: 0 auto; max-width: 100%; }
     
-    /* 侧边栏样式 - 简洁版 */
+    /* 侧边栏样式 */
     .sidebar-nav > ul > li > a {
       font-size: 13px;
-      font-weight: normal;
-      color: #5a5a5a;
-      padding: 6px 15px 6px 20px;
+      font-weight: bold;
+      color: #42b983;
+      padding: 8px 15px 8px 25px;
+      border-left: 3px solid transparent;
+      margin: 2px 8px;
     }
     .sidebar-nav > ul > li > a:hover {
+      background: rgba(66,185,131,0.1);
+      border-left-color: var(--theme-color);
       color: var(--theme-color);
     }
+    /* 子章节样式 */
     .sidebar-nav ul ul li a {
       font-size: 13px;
       color: #666;
-      padding: 5px 20px 5px 30px;
+      padding: 6px 20px 6px 35px;
     }
     .sidebar-nav ul ul li a:hover { color: var(--theme-color); }
     .sidebar-nav ul ul li a.active {
       color: var(--theme-color);
+      background: rgba(66,185,131,0.12);
+      border-left: 3px solid var(--theme-color);
       font-weight: 500;
     }
     .sidebar-nav ul ul ul { display: none; }
