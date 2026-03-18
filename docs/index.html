@@ -17,12 +17,20 @@
     /* 隐藏sidebar展开/折叠按钮 */
     .sidebar-toggle { display: none !important; }
     
-    /* 隐藏sidebar顶部的大标题（Every Embodied Course） */
-    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1,
-    .sidebar-nav > p, .sidebar-nav p, .sidebar .app-name, .sidebar .app-name-link,
-    .sidebar-nav .brand {
+    /* 隐藏sidebar顶部的大标题（Docsify自动生成的name标题） */
+    .sidebar-nav > h1:first-child,
+    .sidebar-nav > .sidebar-brand,
+    .sidebar-nav > div.brand,
+    .sidebar-nav > .app-name {
       display: none !important;
       visibility: hidden !important;
+    }
+    
+    /* 保留章节名称，确保不被隐藏 */
+    .sidebar-nav ul li a,
+    .sidebar-nav ul li > span {
+      display: block !important;
+      visibility: visible !important;
     }
     
     /* 左侧sidebar固定 */
