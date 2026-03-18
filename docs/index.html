@@ -18,12 +18,15 @@
     .sidebar-toggle { display: none !important; }
     
     /* 隐藏sidebar顶部的大标题（Docsify自动生成的name标题） */
-    .sidebar-nav > h1:first-child,
+    .sidebar-nav > h1,
     .sidebar-nav > .sidebar-brand,
     .sidebar-nav > div.brand,
-    .sidebar-nav > .app-name {
+    .sidebar-nav > .app-name,
+    .sidebar-nav > p.app-name {
       display: none !important;
       visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
     }
     
     /* 保留章节名称，确保不被隐藏 */
@@ -31,6 +34,7 @@
     .sidebar-nav ul li > span {
       display: block !important;
       visibility: visible !important;
+      height: auto !important;
     }
     
     /* 左侧sidebar固定 */
