@@ -209,6 +209,29 @@
     });
   </script>
   
-  <!-- 不再需要强制隐藏，CSS已处理 -->
+  <!-- 精准隐藏顶部大标题，保留章节名称 -->
+  <script>
+    setTimeout(function() {
+      // 获取 sidebar 的直接子元素
+      var sidebar = document.querySelector('.sidebar-nav');
+      if (!sidebar) return;
+      
+      // 隐藏第一个子元素中的 h1（通常是顶部大标题）
+      var firstChild = sidebar.firstChild;
+      if (firstChild) {
+        var h1 = firstChild.querySelector ? firstChild.querySelector('h1') : null;
+        if (h1) {
+          h1.style.display = 'none';
+        }
+      }
+      
+      // 同时隐藏 app-name 相关元素
+      var appName = document.querySelector('.sidebar-nav .app-name');
+      if (appName) appName.style.display = 'none';
+      
+      var brand = document.querySelector('.sidebar-nav .brand');
+      if (brand) brand.style.display = 'none';
+    }, 500);
+  </script>
 </body>
 </html>
