@@ -329,6 +329,7 @@ force = angle_output + position_output
 pip install gymnasium numpy
 ```
 
+```python
 # 运行 PID 控制
 import gymnasium as env
 import numpy as np
@@ -397,8 +398,8 @@ class PIDController:
         
         # ===== 角度环（主控制器）=====
         # 目标：让杆子保持竖直（角度=0）
-        angle_error = pole_angle - 0
-        angle_output = (self.kp_angle * angle_angle_error + 
+        angle_error = pole_angle - 0  # 计算角度误差（目标值为0）
+        angle_output = (self.kp_angle * angle_error + 
                        self.kd_angle * pole_vel)
         
         # ===== 位置环（辅助控制器）=====
@@ -506,17 +507,36 @@ $$
 ```bash
 pip install gymnasium scipy numpy
 ```
+
+```python
+# LQR 控制参数设置
+M = 1.0   # 小车质量
+m = 0.1   # 杆子质量
+l = 0.5  # 杆子半长
+g = 9.8  # 重力加速度
+dt = 0.01  # 时间步长
+
+# 状态矩阵 A (连续系统)
+A_c = np.array([
+    [0, 1, 0, 0],
+    [0, 0, -3*m*g/(m+4*M), 0],
     [0, 0, 0, 1],
     [0, 0, 3*(M+m)*g/(l*(m+4*M)), 0]
 ])
 
-# 控制矩阵 B
-B = dt * np.array([
+# 离散化状态矩阵
+A = np.eye(4) + dt * A_c
+
+# 控制矩阵 B (连续系统)
+B_c = np.array([
     [0],
     [1/(M+m) + 3*m/(m+4*M)],
     [0],
     [-3/(l*(m+4*M))]
 ])
+
+# 离散化控制矩阵
+B = dt * B_c
 
 # 权重矩阵
 Q = np.diag([1, 1, 10, 10])  # 状态权重：角度比位置重要
@@ -833,6 +853,122 @@ Episode 2: 500.0
 | PID | 比例-积分-微分控制 |
 | LQR | 线性二次型调节器，自动计算最优增益 |
 | MPC | 模型预测控制，向前看N步 |
+
+---
+
+## 8. 代码实战部署指南
+
+### 8.1 环境要求
+
+| 要求 | 版本 | 说明 |
+|------|------|------|
+| Python | ≥ 3.8 | 推荐 Python 3.10+ |
+| pip | 最新版 | 用于安装依赖 |
+
+### 8.2 安装步骤
+
+#### 步骤 1：创建虚拟环境（推荐）
+
+```bash
+# 创建虚拟环境
+python -m venv cartpole_env
+
+# 激活虚拟环境
+# Linux/Mac:
+source cartpole_env/bin/activate
+# Windows:
+cartpole_env\Scripts\activate
+```
+
+#### 步骤 2：安装依赖
+
+```bash
+# 安装基础依赖
+pip install gymnasium numpy
+
+# 安装 LQR/MPC 需要的高级依赖
+pip install scipy
+```
+
+#### 步骤 3：验证安装
+
+```bash
+python -c "import gymnasium; import numpy as np; import scipy; print('All packages installed successfully!')"
+```
+
+### 8.3 运行代码
+
+#### 运行 PID 控制
+
+```bash
+# 方法1：直接运行
+python cartpole_pid.py
+
+# 方法2：指定模块运行
+python -m cartpole_pid
+```
+
+#### 运行 LQR 控制
+
+```bash
+python cartpole_lqr.py
+```
+
+#### 运行 MPC 控制
+
+```bash
+python cartpole_mpc.py
+```
+
+### 8.4 预期输出
+
+#### PID 控制输出示例：
+```
+Episode 1: 500.0
+Episode 2: 500.0
+Episode 3: 500.0
+Episode 4: 500.0
+Episode 5: 500.0
+
+平均奖励: 500.0
+```
+
+#### LQR 控制输出示例：
+```
+LQR 反馈增益 K: [[-1.  -0.32 -17.32 -2.81]]
+Episode 1: 500.0
+Episode 2: 500.0
+Episode 3: 500.0
+
+平均奖励: 500.0
+```
+
+### 8.5 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| `ModuleNotFoundError: No module named 'gymnasium'` | 未安装 gymnasium | 运行 `pip install gymnasium` |
+| `gymnasium.envs.error.DependencyNotInstalled: numpy not installed` | 缺少 numpy | 运行 `pip install numpy` |
+| `ImportError: cannot import name 'linalg' from 'scipy'` | scipy 版本过旧 | 运行 `pip install --upgrade scipy` |
+| 杆子很快倒下 | PID 参数不合适 | 调整 kp_angle 和 kd_angle 参数 |
+
+### 8.6 代码参数调节指南
+
+#### PID 参数调节
+
+| 参数 | 增大效果 | 减小效果 | 推荐初始值 |
+|------|----------|----------|------------|
+| `kp_angle` | 响应更快 | 响应变慢 | 50.0 |
+| `kd_angle` | 减少超调 | 增加超调 | 10.0 |
+| `kp_pos` | 小车跟随更快 | 小车跟随变慢 | 1.0 |
+
+#### LQR 权重调节
+
+| 权重 | 调整效果 | 推荐值 |
+|------|----------|--------|
+| Q[0], Q[1] | 位置、速度权重 | 1 |
+| Q[2], Q[3] | 角度、角速度权重 | 10 |
+| R | 控制力权重 | 1 |
 
 ---
 
