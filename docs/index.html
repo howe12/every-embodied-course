@@ -18,9 +18,17 @@
     .sidebar-toggle { display: none !important; }
     
     /* 隐藏sidebar标题 */
-    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1 {
+    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1,
+    .sidebar-nav > p, .sidebar-nav p, .sidebar-nav .app-name, .sidebar-nav .app-name-link {
       display: none !important;
       visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    /* 强制隐藏所有可能的标题元素 */
+    .sidebar > h1, .sidebar > p, .sidebar .app-name { 
+      display: none !important; 
     }
     
     /* 左侧sidebar固定 */
