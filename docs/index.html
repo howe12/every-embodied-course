@@ -17,24 +17,16 @@
     /* 隐藏sidebar展开/折叠按钮 */
     .sidebar-toggle { display: none !important; }
     
-    /* 隐藏sidebar顶部的大标题（Docsify自动生成的name标题） */
-    .sidebar-nav > h1,
-    .sidebar-nav > .sidebar-brand,
-    .sidebar-nav > div.brand,
-    .sidebar-nav > .app-name,
-    .sidebar-nav > p.app-name {
+    /* 隐藏sidebar标题 */
+    .sidebar-nav > h1, .sidebar-nav h1, div.sidebar-nav > h1, section.sidebar > h1 {
       display: none !important;
       visibility: hidden !important;
-      height: 0 !important;
-      overflow: hidden !important;
     }
     
     /* 保留章节名称，确保不被隐藏 */
-    .sidebar-nav ul li a,
-    .sidebar-nav ul li > span {
+    .sidebar-nav ul li a {
       display: block !important;
       visibility: visible !important;
-      height: auto !important;
     }
     
     /* 左侧sidebar固定 */
