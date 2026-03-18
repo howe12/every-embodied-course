@@ -153,15 +153,19 @@
 
 ---
 
-## 🤝 贡献者
+## 🤝 贡献者名单
 
-| 姓名 | 职责 | GitHub |
-| :--- | :--- | :--- |
-| **霍海杰** | 课程维护者 | [@howe12](https://github.com/howe12) |
-| **Ethan-Chen-plus** | 项目负责人 | [@Ethan-Chen-plus](https://github.com/Ethan-Chen-plus) |
+| 姓名 | 职责 | 简介 | GitHub |
+| :--- | :--- | :--- | :--- |
+| **Ethan-Chen-plus** | 项目负责人 | 中国科学院大学 | [@Ethan-Chen-plus](https://github.com/Ethan-Chen-plus) |
+| **YYPro** | 第1、2、3、4章贡献者 | 中国科学院大学 | [@YYpro](https://github.com/Suibian-YY-pro) |
+| **李昀迪** | 第2、8、13章贡献者 | 北京科技大学 | [@muzilyd](https://github.com/muzilyd) |
+| **张天一** | 第8章贡献者 | 北京工业大学 | [@GodoneZ](https://github.com/GodoneZ) |
+| **陈可为** | 第5、6、7、9、10章贡献者 | 中国科学院大学 | [@Ethan-Chen-plus](https://github.com/Ethan-Chen-plus) |
+| **霍海杰** | Github Page课程贡献与维护者 | 佛山大学 | [@howe12](https://github.com/howe12) |
 
 ---
 
 ## 📄 LICENSE
 
-本项目采用 **CC BY 4.0** 许可协议。
+本项目文档与教程内容采用 **Creative Commons Attribution 4.0 International (CC BY 4.0)** 许可协议。
