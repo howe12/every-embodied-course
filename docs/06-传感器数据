@@ -1,0 +1,967 @@
+# 06-2 深度相机数据应用
+
+> **前置课程**：06-1 激光雷达数据处理
+> **后续课程**：06-3 IMU数据处理与姿态解算
+
+**作者**：霍海杰 | **联系方式**：howe12@126.com
+
+---
+
+> **前置说明**：深度相机（Depth Camera）是机器人感知领域的重要传感器，它能够同时获取场景的彩色图像和深度信息，为机器人提供三维空间感知能力。本节将深入讲解深度相机的原理、消息类型、数据处理方法，并通过实战案例帮助你掌握深度相机数据的应用技巧。
+
+---
+
+## 1. 深度相机基础原理
+
+深度相机是一种能够获取场景三维信息的传感器，它不仅提供传统的RGB彩色图像，还能够测量场景中每个像素点到相机的距离。与激光雷达相比，深度相机能够获取更丰富的空间信息，但测距范围和精度略有不同。
+
+### 1.1 RGB-D相机工作原理
+
+RGB-D相机通过不同的技术手段获取深度信息，目前主流的方案有三种：
+
+**结构光（Structured Light）**：通过投射已知的光 pattern（如条纹或网格）到场景中，然后分析pattern的变形来计算深度。代表产品包括Intel RealSense D400系列和Microsoft Kinect一代。这种方案在室内近距离（0.1-5米）表现优异，但容易受到强光干扰。
+
+**飞行时间（ToF - Time of Flight）**：通过发射调制光脉冲，测量光信号从发射到返回的时间来计算距离。代表产品包括Microsoft Kinect二代和Intel RealSense L500系列。ToF方案抗干扰能力较强，测距范围更广，但精度略低于结构光。
+
+**立体视觉（Stereo Vision）**：使用两个相机同时拍摄，通过视差原理计算深度。这是一种被动式方案，不需要主动光源。代表产品包括Intel RealSense T265和ZED相机。立体视觉适合户外光线复杂的环境，但需要足够的纹理特征。
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    RGB-D 相机工作原理                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   结构光方案:                                                │
+│   ┌───────┐    投射pattern    ┌───────┐                   │
+│   │ 发射器 │ ──────────────▶ │ 场景  │                   │
+│   └───────┘    变形pattern   └───────┘                   │
+│        │                             │                     │
+│        ▼                             ▼                     │
+│   ┌───────┐    计算深度         ┌───────┐                   │
+│   │ 接收器 │ ◀───────────────  │ 深度图 │                   │
+│   └───────┘                     └───────┘                   │
+│                                                             │
+│   ToF方案:                                                  │
+│   ┌───────┐    发射光脉冲       ┌───────┐                   │
+│   │ ToF  │ ──────────────▶   │ 场景  │                   │
+│   │ 传感器│                   └───────┘                   │
+│   └───────┘     测量返回时间    │      │                   │
+│        │◀──────────────────────┘      │                    │
+│        ▼                              ▼                     │
+│   ┌─────────────────────────────────────────┐              │
+│   │           深度 = 光速 × 飞行时间 / 2     │              │
+│   └─────────────────────────────────────────┘              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 1.2 深度图像与点云
+
+深度相机输出的数据主要有两种形式：**深度图像（Depth Image）**和**点云（Point Cloud）**。
+
+深度图像是一种特殊的图像，其每个像素值表示该点到相机的距离（通常以毫米或米为单位）。与普通RGB图像类似，深度图像也有分辨率，但通常是单通道的（如640×480）。深度图像中也会存在无效值，通常表示该像素无法获取有效的深度测量（如反射率过低或超出测距范围）。
+
+点云是三维空间中一系列点的集合，每个点包含三维坐标（X, Y, Z）以及可能的颜色信息（RGB）。点云能够更直观地表示三维空间结构，是机器人导航、物体识别等任务的重要数据来源。
+
+深度图像可以转换为点云，这个过程需要相机的内参矩阵（焦距、主点坐标等）。转换公式如下：
+
+```
+X = (u - cx) × Z / fx
+Y = (v - cy) × Z / fy
+Z = depth
+
+其中:
+- (u, v) 是像素坐标
+- (cx, cy) 是图像主点坐标
+- (fx, fy) 是焦距
+- Z 是深度值
+```
+
+---
+
+## 2. ROS2中的深度相机消息类型
+
+ROS2提供了丰富的消息类型来描述深度相机数据，这些类型主要定义在`sensor_msgs`包中。
+
+### 2.1 深度图像消息
+
+深度图像使用`sensor_msgs/Image`消息类型表示，这是一种通用的图像消息格式：
+
+```yaml
+# sensor_msgs/msg/Image.msg
+std_msgs/Header header        # 时间戳和坐标系
+uint32 height                # 图像高度（行数）
+uint32 width                # 图像宽度（列数）
+string encoding             # 像素编码格式
+uint8 is_bigendian          # 字节序
+uint32 step                 # 每行字节数
+uint8[] data                # 图像数据
+```
+
+对于深度图像，常用的编码格式包括：
+
+| 编码格式 | 说明 | 数据类型 |
+|----------|------|----------|
+| `16UC1` | 单通道16位无符号整数 | uint16 |
+| `32FC1` | 单通道32位浮点数 | float32 |
+| `mono16` | 另一种16位整数格式 | uint16 |
+
+深度值通常以毫米为单位存储在`16UC1`格式中，转换为米需要除以1000。
+
+### 2.2 点云消息
+
+点云数据使用`sensor_msgs/PointCloud2`消息类型表示：
+
+```yaml
+# sensor_msgs/msg/PointCloud2.msg
+std_msgs/Header header        # 时间戳和坐标系
+uint32 height                # 点云高度（用于表示有序点云）
+uint32 width                 # 点云宽度（点数）
+PointField[] fields          # 每个点的字段定义
+bool is_bigendian           # 字节序
+uint32 point_step           # 每个点的字节数
+uint32 row_step             # 每行的字节数
+uint8[] data                # 点云数据
+bool is_dense               # 是否存在无效点
+```
+
+`PointField`定义了点的属性：
+
+```yaml
+# sensor_msgs/msg/PointField.msg
+string name                 # 字段名称（x, y, z, rgb等）
+uint32 offset              # 字节偏移量
+uint8 datatype             # 数据类型（1=int8, 2=uint8, 3=int16, 4=uint16, 5=int32, 6=uint32, 7=float32, 8=float64）
+uint32 count               # 字段数量（通常为1）
+```
+
+### 2.3 相机内参消息
+
+相机内参使用`sensor_msgs/CameraInfo`消息类型表示：
+
+```yaml
+# sensor_msgs/msg/CameraInfo.msg
+std_msgs/Header header
+uint32 height              # 图像高度
+uint32 width               # 图像宽度
+string distortion_model    # 畸变模型（plumb_bob, equidistant等）
+
+float64[] D                # 畸变系数
+float64[9] K               # 相机内参矩阵 (fx 0 cx; 0 fy cy; 0 0 1)
+float64[9] R               # 矩形变换矩阵
+float64[12] P              # 投影矩阵
+uint32 binning_x           # 像素合并参数
+uint32 binning_y
+RegionOfInterest roi       # 感兴趣区域
+```
+
+---
+
+## 3. 深度相机数据处理
+
+本节将介绍深度相机数据的常用处理方法，包括深度图像读取、点云转换和可视化。
+
+### 3.1 订阅深度图像
+
+```python
+# depth_image_subscriber.py - 订阅深度图像
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+import numpy as np
+
+class DepthImageSubscriber(Node):
+    def __init__(self):
+        super().__init__('depth_image_subscriber')
+        self.subscription = self.create_subscription(
+            Image,
+            '/camera/depth/image_raw',
+            self.depth_callback,
+            10
+        )
+        self.get_logger().info('Depth image subscriber started')
+        
+    def depth_callback(self, msg):
+        # 将ROS2图像消息转换为numpy数组
+        # 假设使用16UC1格式（毫米）
+        if msg.encoding == '16UC1':
+            depth = np.frombuffer(msg.data, dtype=np.uint16)
+            depth = depth.reshape((msg.height, msg.width))
+            depth_meters = depth.astype(np.float32) / 1000.0  # 转换为米
+        elif msg.encoding == '32FC1':
+            depth = np.frombuffer(msg.data, dtype=np.float32)
+            depth_meters = depth.reshape((msg.height, msg.width))
+        else:
+            self.get_logger().warn(f'Unsupported encoding: {msg.encoding}')
+            return
+            
+        # 计算深度统计信息
+        valid_depth = depth_meters[depth_meters > 0]
+        if len(valid_depth) > 0:
+            min_depth = np.min(valid_depth)
+            max_depth = np.max(valid_depth)
+            avg_depth = np.mean(valid_depth)
+            
+            self.get_logger().info(
+                f'Depth range: {min_depth:.2f}m - {max_depth:.2f}m, '
+                f'avg: {avg_depth:.2f}m'
+            )
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = DepthImageSubscriber()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### 3.2 订阅点云数据
+
+```python
+# point_cloud_subscriber.py - 订阅点云数据
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import PointCloud2
+import numpy as np
+
+class PointCloudSubscriber(Node):
+    def __init__(self):
+        super().__init__('point_cloud_subscriber')
+        self.subscription = self.create_subscription(
+            PointCloud2,
+            '/camera/depth/points',
+            self.cloud_callback,
+            10
+        )
+        self.get_logger().info('Point cloud subscriber started')
+        
+    def cloud_callback(self, msg):
+        # 将PointCloud2转换为numpy数组
+        points = self.pointcloud2_to_array(msg)
+        
+        if len(points) > 0:
+            # 计算点云统计信息
+            x = points['x']
+            y = points['y']
+            z = points['z']
+            
+            # 过滤有效点（z > 0 表示在相机前方）
+            valid = z > 0
+            if np.any(valid):
+                min_z = np.min(z[valid])
+                max_z = np.max(z[valid])
+                
+                self.get_logger().info(
+                    f'Points: {len(points)}, '
+                    f'Z range: {min_z:.2f}m - {max_z:.2f}m'
+                )
+                
+    def pointcloud2_to_array(self, cloud_msg):
+        """将PointCloud2消息转换为numpy结构化数组"""
+        # 解析fields
+        dtype_list = []
+        for field in cloud_msg.fields:
+            if field.datatype == 7:  # float32
+                dtype = np.float32
+            elif field.datatype == 8:  # float64
+                dtype = np.float64
+            elif field.datatype == 4:  # uint16
+                dtype = np.uint16
+            else:
+                continue
+            dtype_list.append((field.name, dtype))
+            
+        # 解析点云数据
+        points = np.frombuffer(cloud_msg.data, dtype=dtype_list)
+        return points
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = PointCloudSubscriber()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### 3.3 深度图像转点云
+
+```python
+# depth_to_pointcloud.py - 将深度图像转换为点云
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image, CameraInfo, PointCloud2
+from geometry_msgs.msg import Point32
+from sensor_msgs import point_cloud2
+import numpy as np
+
+class DepthToPointCloud(Node):
+    def __init__(self):
+        super().__init__('depth_to_pointcloud')
+        
+        # 订阅深度图像和相机内参
+        self.depth_sub = self.create_subscription(
+            Image, '/camera/depth/image_raw', self.depth_callback, 10)
+        self.info_sub = self.create_subscription(
+            CameraInfo, '/camera/depth/camera_info', self.info_callback, 10)
+            
+        # 发布点云
+        self.publisher = self.create_publisher(
+            PointCloud2, '/depth/points', 10)
+            
+        self.camera_info = None
+        self.get_logger().info('Depth to point cloud converter started')
+        
+    def info_callback(self, msg):
+        self.camera_info = msg
+        
+    def depth_callback(self, msg):
+        if self.camera_info is None:
+            return
+            
+        # 提取相机内参
+        K = self.camera_info.k
+        fx = K[0]
+        fy = K[4]
+        cx = K[2]
+        cy = K[5]
+        
+        # 解析深度图像
+        if msg.encoding == '16UC1':
+            depth = np.frombuffer(msg.data, dtype=np.uint16)
+            depth = depth.reshape((msg.height, msg.width)).astype(np.float32) / 1000.0
+        else:
+            return
+            
+        # 生成点云
+        points = []
+        for v in range(msg.height):
+            for u in range(msg.width):
+                Z = depth[v, u]
+                if Z > 0 and Z < 10.0:  # 过滤无效和过远的点
+                    X = (u - cx) * Z / fx
+                    Y = (v - cy) * Z / fy
+                    points.append([X, Y, Z])
+                    
+        # 创建PointCloud2消息
+        header = msg.header
+        pc2 = point_cloud2.create_cloud(header, ['x', 'y', 'z'], points)
+        
+        self.publisher.publish(pc2)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = DepthToPointCloud()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## 4. 实战：基于深度相机的避障系统
+
+本节我们将实现一个基于深度相机的**避障系统**，通过深度图像检测前方的障碍物并生成避障策略。
+
+### 4.1 系统架构
+
+```
+┌─────────────────┐
+│  深度相机       │ ──▶ /camera/depth/image_raw
+│  (RealSense)   │ ──▶ /camera/depth/camera_info
+└─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│  障碍物检测节点  │ ◀── 订阅深度图像
+│ (Obstacle Node) │ ──▶ /obstacle/detections
+└─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│  避障决策节点   │ ◀── 订阅障碍物检测
+│ (Avoid Node)    │ ──▶ /cmd_vel (速度命令)
+└─────────────────┘
+```
+
+### 4.2 障碍物检测节点
+
+```python
+# obstacle_detection.py - 基于深度图像的障碍物检测
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from vision_msgs.msg import Detection2DArray, BoundingBox2D
+from geometry_msgs.msg import Pose2D
+import numpy as np
+
+class ObstacleDetection(Node):
+    def __init__(self):
+        super().__init__('obstacle_detection')
+        
+        # 订阅深度图像
+        self.depth_sub = self.create_subscription(
+            Image,
+            '/camera/depth/image_raw',
+            self.depth_callback,
+            10
+        )
+        
+        # 发布障碍物检测结果
+        self.detection_pub = self.create_publisher(
+            Detection2DArray,
+            '/obstacle/detections',
+            10
+        )
+        
+        # 相机参数（需要根据实际相机标定）
+        self.fx = 615.0
+        self.fy = 615.0
+        self.cx = 320.0
+        self.cy = 240.0
+        
+        # 障碍物距离阈值（米）
+        self.min_distance = 0.3
+        self.max_distance = 3.0
+        
+        self.get_logger().info('Obstacle detection node started')
+        
+    def depth_callback(self, msg):
+        # 解析深度图像
+        depth = np.frombuffer(msg.data, dtype=np.uint16)
+        depth = depth.reshape((msg.height, msg.width)).astype(np.float32) / 1000.0
+        
+        # 障碍物检测
+        detections = self.detect_obstacles(depth, msg.header)
+        
+        # 发布检测结果
+        self.detection_pub.publish(detections)
+        
+    def detect_obstacles(self, depth, header):
+        """检测障碍物并计算位置"""
+        detections = Detection2DArray()
+        detections.header = header
+        
+        # 将深度图像划分为网格
+        h, w = depth.shape
+        grid_size = 8  # 8x8 网格
+        cell_h = h // grid_size
+        cell_w = w // grid_size
+        
+        for i in range(grid_size):
+            for j in range(grid_size):
+                # 提取网格区域
+                y_start = i * cell_h
+                y_end = (i + 1) * cell_h
+                x_start = j * cell_w
+                x_end = (j + 1) * cell_w
+                
+                cell = depth[y_start:y_end, x_start:x_end]
+                
+                # 计算该区域的最小深度
+                valid_depth = cell[(cell > self.min_distance) & (cell < self.max_distance)]
+                
+                if len(valid_depth) > 0:
+                    min_dist = np.min(valid_depth)
+                    
+                    # 如果距离小于阈值，标记为障碍物
+                    if min_dist < 1.0:  # 1米内视为危险
+                        # 计算障碍物在相机坐标系下的位置
+                        center_u = (x_start + x_end) // 2
+                        center_v = (y_start + y_end) // 2
+                        
+                        Z = min_dist
+                        X = (center_u - self.cx) * Z / self.fx
+                        Y = (center_v - self.cy) * Z / self.fy
+                        
+                        # 创建检测结果
+                        detection = Detection2DArray()
+                        bbox = BoundingBox2D()
+                        bbox.center.position.x = float(center_u)
+                        bbox.center.position.y = float(center_v)
+                        bbox.size_x = float(cell_w)
+                        bbox.size_y = float(cell_h)
+                        
+                        # 距离信息存储在header的frame_id中
+                        detection.detections.append(bbox)
+                        
+        return detections
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ObstacleDetection()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### 4.3 避障决策节点
+
+```python
+# obstacle_avoidance.py - 避障决策节点
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
+import numpy as np
+
+class ObstacleAvoidance(Node):
+    def __init__(self):
+        super().__init__('obstacle_avoidance')
+        
+        # 订阅深度图像（直接使用原始数据做决策）
+        self.depth_sub = self.create_subscription(
+            Image,
+            '/camera/depth/image_raw',
+            self.depth_callback,
+            10
+        )
+        
+        # 发布速度命令
+        self.cmd_pub = self.create_publisher(
+            Twist,
+            '/cmd_vel',
+            10
+        )
+        
+        # 速度参数
+        self.max_linear_speed = 0.3  # m/s
+        self.max_angular_speed = 0.5  # rad/s
+        
+        # 停止距离阈值
+        self.stop_distance = 0.4  # 米
+        self.warning_distance = 0.8  # 米
+        
+        self.get_logger().info('Obstacle avoidance node started')
+        
+    def depth_callback(self, msg):
+        # 解析深度图像
+        depth = np.frombuffer(msg.data, dtype=np.uint16)
+        depth = depth.reshape((msg.height, msg.width)).astype(np.float32) / 1000.0
+        
+        # 获取图像中心区域的深度值（机器人正前方）
+        h, w = depth.shape
+        center_region = depth[h//4:3*h//4, w//4:3*w//4]
+        
+        # 计算前方最小距离
+        valid_depth = center_region[center_region > 0.1]
+        min_distance = np.min(valid_depth) if len(valid_depth) > 0 else float('inf')
+        
+        # 生成速度命令
+        cmd = Twist()
+        
+        if min_distance < self.stop_distance:
+            # 距离太近，停止
+            cmd.linear.x = 0.0
+            cmd.angular.z = 0.0
+            self.get_logger().warn(f'Stop! Obstacle at {min_distance:.2f}m')
+            
+        elif min_distance < self.warning_distance:
+            # 距离较近，减速并转向
+            speed_factor = (min_distance - self.stop_distance) / (self.warning_distance - self.stop_distance)
+            cmd.linear.x = self.max_linear_speed * speed_factor * 0.3
+            # 简单的避障策略：向左侧转向
+            cmd.angular.z = self.max_angular_speed * 0.5
+            self.get_logger().info(f'Slow down and turn! Distance: {min_distance:.2f}m')
+            
+        else:
+            # 正常前进
+            cmd.linear.x = self.max_linear_speed
+            cmd.angular.z = 0.0
+            
+        self.cmd_pub.publish(cmd)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ObstacleAvoidance()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### 4.4 运行系统
+
+```bash
+# 启动RealSense相机（需要先安装realsense2相机驱动）
+# ros2 launch realsense2_camera rs_launch.py enable_depth:=true
+
+# 启动障碍物检测节点
+# ros2 run depth_apps obstacle_detection
+
+# 启动避障决策节点
+# ros2 run depth_apps obstacle_avoidance
+
+# 在rviz2中可视化
+# rviz2 -d ~/ros2_ws/src/depth_apps/config/obstacle_avoidance.rviz
+```
+
+---
+
+## 5. 实战：基于深度相机的3D物体检测
+
+本节我们将实现一个基于深度相机的**3D物体检测系统**，结合RGB图像的目标检测和深度信息来获取物体的三维位置。
+
+### 5.1 系统概述
+
+该系统使用YOLOv8进行2D目标检测，结合深度图像获取每个检测框内物体的三维位置信息。
+
+```
+RGB图像 ──▶ YOLOv8检测 ──┐
+                        ├──▶ 3D边界框 ──▶ 3D目标跟踪
+深度图像 ────────────────┘
+```
+
+### 5.2 3D物体检测节点
+
+```python
+# 3d_object_detection.py - 3D物体检测
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image, CameraInfo
+from vision_msgs.msg import Detection2DArray, Detection3DArray
+from geometry_msgs.msg import Pose, Vector3
+import numpy as np
+
+# 假设使用ultralytics的YOLOv8
+try:
+    from ultralytics import YOLO
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+    print("Warning: ultralytics not installed. Install with: pip install ultralytics")
+
+class ObjectDetection3D(Node):
+    def __init__(self):
+        super().__init__('object_detection_3d')
+        
+        # 订阅RGB图像和深度图像
+        self.rgb_sub = self.create_subscription(
+            Image, '/camera/color/image_raw', self.rgb_callback, 10)
+        self.depth_sub = self.create_subscription(
+            Image, '/camera/depth/image_raw', self.depth_callback, 10)
+        self.info_sub = self.create_subscription(
+            CameraInfo, '/camera/depth/camera_info', self.info_callback, 10)
+            
+        # 发布3D检测结果
+        self.detection_pub = self.create_publisher(
+            Detection3DArray, '/detections_3d', 10)
+            
+        # 相机内参
+        self.camera_info = None
+        self.latest_depth = None
+        
+        # 加载YOLOv8模型（如果可用）
+        if YOLO_AVAILABLE:
+            self.model = YOLO('yolov8n.pt')  # 使用nano版本以提高速度
+            self.get_logger().info('YOLOv8 model loaded')
+        else:
+            self.model = None
+            self.get_logger().warn('YOLOv8 not available, using simple detection')
+            
+        self.get_logger().info('3D Object detection node started')
+        
+    def info_callback(self, msg):
+        self.camera_info = msg
+        
+    def rgb_callback(self, msg):
+        if self.latest_depth is None or self.camera_info is None:
+            return
+            
+        # 进行2D目标检测
+        if self.model:
+            results = self.model(self.image_msg_to_numpy(msg))
+            detections_3d = self.process_detections(results, msg.header)
+        else:
+            detections_3d = Detection3DArray()
+            detections_3d.header = msg.header
+            
+        self.detection_pub.publish(detections_3d)
+        
+    def depth_callback(self, msg):
+        # 更新最新深度图像
+        self.latest_depth = msg
+        
+    def process_detections(self, results, header):
+        """处理检测结果，计算3D位置"""
+        detections = Detection3DArray()
+        detections.header = header
+        
+        # 提取相机内参
+        K = self.camera_info.k
+        fx, fy = K[0], K[4]
+        cx, cy = K[2], K[5]
+        
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                # 获取2D边界框
+                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                conf = float(box.conf[0])
+                cls_id = int(box.cls[0])
+                
+                # 计算边界框中心在图像上的坐标
+                u = int((x1 + x2) / 2)
+                v = int((y1 + y2) / 2)
+                
+                # 获取该位置的深度值
+                if u < self.latest_depth.width and v < self.latest_depth.height:
+                    # 16UC1格式：毫米转米
+                    depth_mm = self.latest_depth.data[v * self.latest_depth.width + u]
+                    Z = depth_mm / 1000.0  # 转换为米
+                    
+                    if Z > 0 and Z < 10:  # 有效深度范围
+                        # 计算3D坐标
+                        X = (u - cx) * Z / fx
+                        Y = (v - cy) * Z / fy
+                        
+                        # 创建3D检测结果
+                        detection = Detection3D()
+                        detection.bbox.center.position.x = X
+                        detection.bbox.center.position.y = Y
+                        detection.bbox.center.position.z = Z
+                        
+                        # 边界框尺寸（使用2D框的尺寸作为近似）
+                        detection.bbox.size.x = (x2 - x1) * Z / fx
+                        detection.bbox.size.y = (y2 - y1) * Z / fy
+                        detection.bbox.size.z = 0.5  # 假设物体高度
+                        
+                        detection.results.append(Detection3D.Result())
+                        detection.results[-1].hypothesis.class_id = str(cls_id)
+                        detection.results[-1].hypothesis.score = conf
+                        
+                        detections.detections.append(detection)
+                        
+        return detections
+        
+    def image_msg_to_numpy(self, msg):
+        """将ROS图像消息转换为numpy数组"""
+        import cv2
+        # 这里需要使用cv_bridge或image_transport
+        # 简化处理，仅作为示例
+        pass
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ObjectDetection3D()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## 6. 深度相机标定与使用注意事项
+
+深度相机的精度和稳定性很大程度上取决于正确的标定。本节介绍深度相机的标定方法和常见问题的解决方案。
+
+### 6.1 深度相机标定
+
+深度相机的标定主要包括两部分：**RGB相机标定**和**深度标定**。
+
+RGB相机标定使用标准的棋盘格标定方法，可以获取相机的内参（焦距、主点）和畸变系数：
+
+```bash
+# 启动标定工具
+ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.108 rgb:=/camera/color/image_raw camera:=/camera/color/camera_info
+```
+
+深度相机的标定通常由厂商提供，但可以通过ROS2的参数进行微调：
+
+```yaml
+# depth_camera.yaml
+camera:
+  ros__parameters:
+    depth_module:
+      depth_filter_distance: 0.05  # 深度滤波距离
+      depth_filter_smooth_delta: 2  # 深度平滑参数
+      
+    # 深度偏移校正（毫米）
+    depth_scale: 1.0
+    depth_offset: 0
+```
+
+### 6.2 常见问题与解决方案
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| 深度值不稳定 | 光照条件差或物体反射率低 | 增加环境光照或使用主动光源 |
+| 深度图像有空洞 | 物体表面无法返回有效信号 | 使用深度插值或滤波 |
+| RGB与深度图像不对齐 | 外参未标定 | 使用厂商提供的对齐功能 |
+| 测距范围不准确 | 超出相机有效范围 | 确保物体在0.1-5米范围内 |
+
+### 6.3 深度图像滤波
+
+为了获得更稳定的深度数据，可以应用各种滤波算法：
+
+```python
+# depth_filter.py - 深度图像滤波示例
+import numpy as np
+
+def apply_bilateral_filter(depth, filter_size=5, sigma=1.0):
+    """双边滤波 - 保持边缘的同时平滑深度"""
+    from scipy.ndimage import gaussian_filter
+    
+    # 空间权重（高斯）
+    spatial = gaussian_filter(np.ones_like(depth), sigma) / (filter_size ** 2)
+    
+    # 深度权重
+    depth_diff = depth - gaussian_filter(depth, sigma)
+    depth_weight = np.exp(-(depth_diff ** 2) / (2 * sigma ** 2))
+    
+    # 应用权重
+    filtered = gaussian_filter(depth * depth_weight, sigma) / (gaussian_filter(depth_weight, sigma) + 1e-6)
+    
+    return filtered
+
+def apply_median_filter(depth, kernel_size=3):
+    """中值滤波 - 去除离群值"""
+    from scipy.ndimage import median_filter
+    return median_filter(depth, size=kernel_size)
+```
+
+---
+
+## 练习题
+
+### 选择题
+
+1. RGB-D相机获取深度信息的主要方式不包括以下哪种？
+   - A) 结构光（Structured Light）
+   - B) 飞行时间（ToF）
+   - C) 激光测距（Laser Ranging）
+   - D) 立体视觉（Stereo Vision）
+   
+   **答案：C**。激光测距是激光雷达的工作方式，不是RGB-D相机的深度获取方式。
+
+2. 深度图像中，像素值为0通常表示什么含义？
+   - A) 物体在相机正前方
+   - B) 该像素无法获取有效的深度测量
+   - C) 物体距离相机1米
+   - D) 物体距离相机10米
+   
+   **答案：B**。深度值为0通常表示无效数据，可能是由于表面反射率过低、超出测距范围或传感器无法检测等原因。
+
+3. 在ROS2中，深度相机输出的点云消息类型是什么？
+   - A) sensor_msgs/PointCloud
+   - B) sensor_msgs/PointCloud2
+   - C) sensor_msgs/PointField
+   - D) sensor_msgs/PointCloud3
+   
+   **答案：B**。ROS2中使用`sensor_msgs/PointCloud2`作为标准点云消息类型。
+
+4. 将深度图像转换为点云时，不需要以下哪个参数？
+   - A) 相机内参（焦距、主点）
+   - B) 相机外参
+   - C) 深度值
+   - D) 图像分辨率
+   
+   **答案：B**。深度图像转点云只需要内参和深度值，不需要外参（外参用于多传感器之间的坐标变换）。
+
+### 实践题
+
+5. 编写一个Python节点，订阅深度图像话题 `/camera/depth/image_raw`，计算图像中心区域（64x64像素）的平均深度，并在终端输出。
+   
+   **参考答案**：
+   
+   ```python
+   import rclpy
+   from rclpy.node import Node
+   from sensor_msgs.msg import Image
+   import numpy as np
+
+   class DepthAnalyzer(Node):
+       def __init__(self):
+           super().__init__('depth_analyzer')
+           self.subscription = self.create_subscription(
+               Image, '/camera/depth/image_raw', self.callback, 10)
+           self.get_logger().info('Depth analyzer started')
+           
+       def callback(self, msg):
+           # 解析深度图像
+           depth = np.frombuffer(msg.data, dtype=np.uint16)
+           depth = depth.reshape((msg.height, msg.width))
+           
+           # 提取中心区域
+           h, w = depth.shape
+           center_h, center_w = 64, 64
+           y_start = max(0, (h - center_h) // 2)
+           x_start = max(0, (w - center_w) // 2)
+           
+           center_region = depth[y_start:y_start+center_h, x_start:x_start+center_w]
+           
+           # 计算平均深度（排除0值）
+           valid_depth = center_region[center_region > 0]
+           if len(valid_depth) > 0:
+               avg_depth = np.mean(valid_depth) / 1000.0  # 毫米转米
+               self.get_logger().info(f'Average center depth: {avg_depth:.3f}m')
+
+   def main(args=None):
+       rclpy.init(args=args)
+       node = DepthAnalyzer()
+       rclpy.spin(node)
+       node.destroy_node()
+       rclpy.shutdown()
+
+   if __name__ == '__main__':
+       main()
+   ```
+
+6. 修改避障系统示例，添加超声波传感器数据融合，实现多传感器融合避障。
+   
+   **提示**：
+   - 添加超声波话题 `/ultrasonic` 订阅
+   - 融合逻辑中取多个传感器的最小距离
+   - 根据不同传感器的特性设置权重
+
+---
+
+## 本章小结
+
+本章我们全面学习了深度相机数据应用的相关知识。基础原理部分，我们了解了RGB-D相机的工作原理（结构光、ToF、立体视觉）以及深度图像与点云的关系。消息类型部分，我们掌握了ROS2中深度图像、点云和相机内参的消息格式。数据处理部分，我们学习了深度图像读取、点云订阅以及深度图转点云的方法。最后，通过避障系统和3D物体检测两个实战项目，我们将理论知识应用于实践。
+
+深度相机是机器人感知的重要传感器，能够提供丰富的空间信息。掌握深度相机的使用方法，将为后续的SLAM、导航、物体识别等任务打下坚实基础。
+
+---
+
+## 参考资料
+
+### ROS2官方文档
+
+1. sensor_msgs: <https://github.com/ros2/common_interfaces/tree/master/sensor_msgs>
+2. image_transport: <https://github.com/ros-perception/image_common>
+
+### 深度相机文档
+
+3. Intel RealSense: <https://www.intelrealsense.com/documentation/>
+4. Azure Kinect: <https://docs.microsoft.com/en/azure/kinect-dk/>
+
+### 深度学习目标检测
+
+5. YOLOv8: <https://github.com/ultralytics/ultralytics>
+6. ROS2目标检测: <https://github.com/ros-perception/vision_msgs>
+
+---
+
+## 下节预告
+
+下一节我们将学习**06-3 IMU数据处理与姿态解算**，了解惯性测量单元的工作原理、数据处理方法以及如何在机器人系统中应用IMU数据。
+
+---
+
+*本章学习完成！深度相机能够为机器人提供丰富的三维空间信息，建议大家在实际机器人平台上多加练习，掌握深度数据的处理技巧。*
