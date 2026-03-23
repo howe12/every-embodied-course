@@ -1,10 +1,21 @@
 # Habitat 仿真平台完整入门笔记
 
+**作者**：霍海杰 | **联系方式**：howe12@126.com
+
 > 从零开始！小白也能学会的 Habitat 导航实战指南
-> 
+>
 > 本文为【Datawhale-具身智能零基础】学习笔记
-> 
+>
 > 参考链接：https://github.com/datawhalechina/every-embodied/tree/main/08-%E5%85%B7%E8%BA%AB%E5%AF%BC%E8%88%AA%E5%8F%8AVLN
+>
+> > 基础教程：https://github.com/facebookresearch/habitat-lab/tree/main/examples
+>
+> >  **官方资源**
+> >
+> > - **官网**: https://aihabitat.org
+> > - **GitHub**: https://github.com/facebookresearch/habitat-sim
+> > - **文档**: https://aihabitat.org/docs/habitat-lab/
+> > - **论文**:[Habitat 1.0 (ICCV 2019)](https://arxiv.org/abs/1904.01201)，[Habitat 2.0 (NeurIPS 2021)](https://arxiv.org/abs/2106.14405)
 
 ---
 
