@@ -160,7 +160,7 @@
   - [17-3-VLN视觉语言导航](17-VLN大模型/17-3-VLN-视觉语言导航.md)
 
   - [17-3b-对话式导航与交互导航](17-VLN大模型/17-3-对话式导航与交互导航.md)  - [17-4-SWIN-transformer](17-VLN大模型/17-4-SWIN-transformer.md)
-  - [17-5-VLN数据集与评估](17-VLN大模型/17-5-VLN-数据集与评估.md)
+  - [17-5-室内VLN与RoomRPC](17-VLN大模型/17-5-室内VLN与RoomRPC.md)
   - [17-6-VLN项目实战](17-VLN大模型/17-6-VLN-项目实战.md)
   - [Habitat仿真平台入门](17-VLN大模型/Habitat仿真平台完整入门笔记.md)
 
