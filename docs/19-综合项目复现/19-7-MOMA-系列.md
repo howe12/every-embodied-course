@@ -2023,3 +2023,951 @@ def train_hierarchical_policy(
 - MOMA-Challenge：https://moma-challenge.github.io/
 - PyBullet Fetch 机器人：https://github.com/bulletphysics/bullet3
 - Habitat-Sim：https://aihabitat.org/
+            "states": state,
+            "actions": action,
+            "task_id": ep["task_id"],
+            "scene_id": ep["scene_id"],
+            "difficulty": ep["difficulty"],
+            "num_objects": ep["num_objects"],
+            "language_instruction": ep["language_instruction"]
+        }
+
+
+def create_moma_dataloader(
+    data_root: str,
+    split: str = "train",
+    difficulty: Optional[List[str]] = None,
+    batch_size: int = 32,
+    shuffle: bool = True,
+    num_workers: int = 4,
+    seq_length: int = 32,
+    load_images: bool = True,
+    normalize: bool = True
+) -> DataLoader:
+    """创建 MOMA 数据加载器"""
+    dataset = MOMADataset(
+        data_root=data_root,
+        split=split,
+        difficulty=difficulty,
+        normalize=normalize,
+        seq_length=seq_length,
+        load_images=load_images
+    )
+    
+    def collate_fn(batch):
+        """自定义批次整理函数"""
+        max_len = max(item["actions"].shape[0] for item in batch)
+        
+        padded_states = []
+        padded_actions = []
+        masks = []
+        
+        for item in batch:
+            seq_len = item["actions"].shape[0]
+            pad_len = max_len - seq_len
+            
+            if pad_len > 0:
+                state_pad = torch.zeros(pad_len, item["states"].shape[1])
+                action_pad = torch.zeros(pad_len, item["actions"].shape[1])
+                mask = torch.cat([torch.ones(seq_len), torch.zeros(pad_len)], dim=0)
+                states = torch.cat([item["states"], state_pad], dim=0)
+                actions = torch.cat([item["actions"], action_pad], dim=0)
+            else:
+                states = item["states"]
+                actions = item["actions"]
+                mask = torch.ones(seq_len)
+            
+            padded_states.append(states)
+            padded_actions.append(actions)
+            masks.append(mask)
+        
+        return {
+            "states": torch.stack(padded_states),
+            "actions": torch.stack(padded_actions),
+            "mask": torch.stack(masks),
+            "task_ids": [item["task_id"] for item in batch],
+            "scene_ids": [item["scene_id"] for item in batch],
+            "difficulties": [item["difficulty"] for item in batch],
+            "language_instructions": [item["language_instruction"] for item in batch]
+        }
+    
+    return DataLoader(
+        dataset, batch_size=batch_size, shuffle=shuffle,
+        num_workers=num_workers, collate_fn=collate_fn, pin_memory=True
+    )
+```
+
+### 6.2 基线策略实现
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from typing import Tuple
+
+class MomaBCPolicy(nn.Module):
+    """
+    MOMA 行为克隆策略网络（移动机械臂版）
+    
+    输入：移动机械臂状态（底盘位置 + 臂部关节 + 夹爪）
+    输出：底盘动作（2D）+ 臂部动作（6D）+ 夹爪动作（1D）
+    """
+    
+    def __init__(
+        self,
+        base_state_dim: int = 3,     # 底盘：x, y, theta
+        arm_state_dim: int = 6,       # 臂部：6 个关节角
+        gripper_dim: int = 1,         # 夹爪：开度
+        base_action_dim: int = 2,     # 底盘动作：dx, dy
+        arm_action_dim: int = 6,     # 臂部动作：6 关节增量
+        hidden_dim: int = 512
+    ):
+        super().__init__()
+        
+        state_dim = base_state_dim + arm_state_dim + gripper_dim
+        
+        # 共享特征提取网络
+        self.shared_net = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.LayerNorm(hidden_dim // 2),
+            nn.ReLU()
+        )
+        
+        # 底盘动作预测头
+        self.base_head = nn.Sequential(
+            nn.Linear(hidden_dim // 2, hidden_dim // 4),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 4, base_action_dim),
+            nn.Tanh()  # 限制动作幅度
+        )
+        
+        # 臂部动作预测头
+        self.arm_head = nn.Sequential(
+            nn.Linear(hidden_dim // 2, hidden_dim // 4),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 4, arm_action_dim),
+            nn.Tanh()
+        )
+        
+        # 夹爪动作预测头
+        self.gripper_head = nn.Sequential(
+            nn.Linear(hidden_dim // 2, hidden_dim // 8),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 8, gripper_dim),
+            nn.Sigmoid()  # 夹爪开度 [0, 1]
+        )
+        
+        # 动作幅度缩放参数
+        self.base_scale = nn.Parameter(torch.ones(base_action_dim) * 0.1)
+        self.arm_scale = nn.Parameter(torch.ones(arm_action_dim) * 0.05)
+    
+    def forward(self, state: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        前向传播
+        
+        参数:
+            state: (B, D) 状态向量
+        
+        返回:
+            base_action: (B, 2) 底盘动作
+            arm_action: (B, 6) 臂部动作
+            gripper_action: (B, 1) 夹爪动作
+        """
+        features = self.shared_net(state)
+        
+        base_action = self.base_head(features) * self.base_scale
+        arm_action = self.arm_head(features) * self.arm_scale
+        gripper_action = self.gripper_head(features)
+        
+        return base_action, arm_action, gripper_action
+    
+    def compute_loss(
+        self,
+        states: torch.Tensor,
+        target_base_action: torch.Tensor,
+        target_arm_action: torch.Tensor,
+        target_gripper: torch.Tensor,
+        mask: torch.Tensor = None
+    ) -> torch.Tensor:
+        """
+        计算行为克隆损失
+        
+        参数:
+            states: (B, T, D) 状态序列
+            target_base_action: (B, T, 2) 目标底盘动作
+            target_arm_action: (B, T, 6) 目标臂部动作
+            target_gripper: (B, T, 1) 目标夹爪动作
+            mask: (B, T) 有效位掩码
+        
+        返回:
+            loss: 标量损失
+        """
+        B, T, D = states.shape
+        
+        # 展平序列
+        states_flat = states.view(B * T, D)
+        base_flat = target_base_action.view(B * T, 2)
+        arm_flat = target_arm_action.view(B * T, 6)
+        gripper_flat = target_gripper.view(B * T, 1)
+        
+        # 前向传播
+        pred_base, pred_arm, pred_gripper = self.forward(states_flat)
+        
+        # 计算 MSE 损失
+        loss_base = F.mse_loss(pred_base, base_flat, reduction='none').mean(dim=1)
+        loss_arm = F.mse_loss(pred_arm, arm_flat, reduction='none').mean(dim=1)
+        loss_gripper = F.mse_loss(pred_gripper, gripper_flat, reduction='none').mean(dim=1)
+        
+        loss = loss_base + 2.0 * loss_arm + loss_gripper
+        
+        if mask is not None:
+            mask_flat = mask.view(B * T)
+            loss = (loss * mask_flat).sum() / (mask_flat.sum() + 1e-7)
+        else:
+            loss = loss.mean()
+        
+        return loss
+
+
+class MomaVisionBCPolicy(nn.Module):
+    """
+    MOMA 视觉行为克隆策略（带图像输入）
+    
+    输入：RGB 图像 + 状态向量
+    输出：底盘动作 + 臂部动作 + 夹爪动作
+    """
+    
+    def __init__(
+        self,
+        image_channels: int = 3,
+        state_dim: int = 10,
+        base_action_dim: int = 2,
+        arm_action_dim: int = 6,
+        hidden_dim: int = 512,
+        encoder_pretrained: bool = True
+    ):
+        super().__init__()
+        
+        # 视觉编码器（轻量 CNN）
+        self.image_encoder = nn.Sequential(
+            # (B, 3, 224, 224) -> (B, 32, 112, 112)
+            nn.Conv2d(image_channels, 32, kernel_size=5, stride=2, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            # (B, 32, 112, 112) -> (B, 64, 56, 56)
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            # (B, 64, 56, 56) -> (B, 128, 28, 28)
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            
+            # (B, 128, 28, 28) -> (B, 256, 14, 14)
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            
+            # (B, 256, 14, 14) -> (B, 512, 7, 7)
+            nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            
+            nn.AdaptiveAvgPool2d((1, 1))  # 全局池化
+        )
+        
+        self.vision_feature_dim = 512
+        
+        # 融合网络
+        self.fusion_net = nn.Sequential(
+            nn.Linear(self.vision_feature_dim + state_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1)
+        )
+        
+        # 动作头（与 MomaBCPolicy 相同）
+        self.base_head = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 4),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 4, base_action_dim),
+            nn.Tanh()
+        )
+        
+        self.arm_head = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 4),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 4, arm_action_dim),
+            nn.Tanh()
+        )
+        
+        self.gripper_head = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 8),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 8, 1),
+            nn.Sigmoid()
+        )
+        
+        self.base_scale = nn.Parameter(torch.ones(base_action_dim) * 0.1)
+        self.arm_scale = nn.Parameter(torch.ones(arm_action_dim) * 0.05)
+    
+    def forward(
+        self,
+        image: torch.Tensor,
+        state: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        前向传播
+        
+        参数:
+            image: (B, C, H, W) 图像
+            state: (B, D) 状态向量
+        
+        返回:
+            base_action: (B, 2) 底盘动作
+            arm_action: (B, 6) 臂部动作
+            gripper_action: (B, 1) 夹爪动作
+        """
+        # 视觉特征
+        B = image.shape[0]
+        vision_feat = self.image_encoder(image).view(B, -1)
+        
+        # 状态 + 视觉特征融合
+        fused = torch.cat([vision_feat, state], dim=1)
+        features = self.fusion_net(fused)
+        
+        # 预测动作
+        base_action = self.base_head(features) * self.base_scale
+        arm_action = self.arm_head(features) * self.arm_scale
+        gripper_action = self.gripper_head(features)
+        
+        return base_action, arm_action, gripper_action
+```
+
+### 6.3 评估脚本
+
+```python
+import json
+import numpy as np
+import torch
+from pathlib import Path
+from typing import Dict, List
+from tqdm import tqdm
+
+def evaluate_moma_model(
+    model: torch.nn.Module,
+    dataloader: torch.utils.data.DataLoader,
+    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    save_predictions: bool = False,
+    output_dir: str = "./results"
+) -> Dict[str, float]:
+    """
+    评估 MOMA 模型性能
+    
+    参数:
+        model: 待评估模型
+        dataloader: 数据加载器
+        device: 计算设备
+        save_predictions: 是否保存预测结果
+        output_dir: 结果保存目录
+    
+    返回:
+        评估指标字典
+    """
+    model.eval()
+    
+    all_success = []
+    all_object_offset = []
+    all_execution_time = []
+    all_smoothness = []
+    all_collision_count = []
+    
+    predictions = [] if save_predictions else None
+    
+    with torch.no_grad():
+        for batch in tqdm(dataloader, desc="Evaluating"):
+            states = batch["states"].to(device)
+            actions = batch["actions"].to(device)
+            masks = batch["mask"].to(device)
+            
+            # 预测动作
+            if hasattr(model, 'forward'):
+                # 处理视觉+状态输入
+                if isinstance(batch.get("images"), torch.Tensor):
+                    images = batch["images"].to(device)
+                    pred_base, pred_arm, pred_gripper = model(images, states[:, -1, :])
+                else:
+                    pred_base, pred_arm, pred_gripper = model(states[:, -1, :])
+                
+                # 计算预测误差
+                target_base = actions[:, -1, :2]
+                target_arm = actions[:, -1, 2:8]
+                target_gripper = actions[:, -1, 8:9]
+                
+                base_error = torch.norm(pred_base - target_base, dim=1).cpu().numpy()
+                arm_error = torch.norm(pred_arm - target_arm, dim=1).cpu().numpy()
+                
+                # 模拟成功率（基于动作误差阈值）
+                success_rate = np.mean((base_error < 0.05) & (arm_error < 0.1))
+                all_success.append(success_rate)
+                
+                # 物体偏移量（简化估算）
+                object_offset = base_error * 0.5  # 简化估算，实际应跟踪物体位置
+                all_object_offset.append(object_offset.mean())
+                
+                # 执行效率
+                execution_time = (1.0 - np.clip(base_error / 0.5, 0, 1))
+                all_execution_time.append(execution_time.mean())
+                
+                # 轨迹平滑度
+                if len(actions) > 2:
+                    vel_diff = torch.diff(actions[:, :, :2], dim=1)
+                    smoothness = torch.norm(vel_diff, dim=2).std().cpu().item()
+                    all_smoothness.append(smoothness)
+                
+                if save_predictions:
+                    predictions.append({
+                        "task_ids": batch["task_ids"],
+                        "pred_base": pred_base.cpu().numpy(),
+                        "pred_arm": pred_arm.cpu().numpy(),
+                        "target_base": target_base.cpu().numpy(),
+                        "target_arm": target_arm.cpu().numpy()
+                    })
+    
+    # 汇总结果
+    results = {
+        "success_rate": np.mean(all_success) if all_success else 0.0,
+        "object_offset": np.mean(all_object_offset) if all_object_offset else 0.0,
+        "execution_efficiency": np.mean(all_execution_time) if all_execution_time else 0.0,
+        "trajectory_smoothness": np.mean(all_smoothness) if all_smoothness else 0.0,
+        "collision_rate": np.mean(all_collision_count) if all_collision_count else 0.0
+    }
+    
+    # 计算综合评分
+    results["overall_score"] = (
+        0.4 * results["success_rate"] +
+        0.2 * (1 - results["object_offset"] / 0.5) +
+        0.15 * results["execution_efficiency"] +
+        0.1 * results["trajectory_smoothness"] +
+        0.15 * (1 - results["collision_rate"])
+    )
+    
+    print(f"\n{'='*40}")
+    print(f"MOMA-Challenge 评估结果")
+    print(f"{'='*40}")
+    print(f"任务成功率 (SR):         {results['success_rate']:.3f}")
+    print(f"物体偏移量 (OS):         {results['object_offset']:.4f} m")
+    print(f"执行效率 (EE):           {results['execution_efficiency']:.3f}")
+    print(f"轨迹平滑度 (TS):         {results['trajectory_smoothness']:.4f}")
+    print(f"碰撞率 (CR):             {results['collision_rate']:.3f}")
+    print(f"{'='*40}")
+    print(f"综合评分:                {results['overall_score']:.3f}")
+    print(f"{'='*40}")
+    
+    # 保存结果
+    if save_predictions:
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        with open(output_path / "evaluation_results.json", 'w') as f:
+            json.dump(results, f, indent=2)
+        
+        if predictions:
+            torch.save(predictions, output_path / "predictions.pt")
+        
+        print(f"\n结果已保存到: {output_path}")
+    
+    return results
+```
+
+### 6.4 训练脚本
+
+```python
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from pathlib import Path
+import time
+
+def train_moma_bc(
+    data_root: str,
+    model_type: str = "state_only",
+    epochs: int = 100,
+    lr: float = 1e-3,
+    batch_size: int = 64,
+    seq_length: int = 32,
+    save_path: str = "moma_bc_policy.pth",
+    log_dir: str = "./logs"
+):
+    """
+    训练 MOMA 行为克隆策略
+    
+    参数:
+        data_root: 数据目录
+        model_type: 模型类型（state_only / vision）
+        epochs: 训练轮数
+        lr: 学习率
+        batch_size: 批次大小
+        seq_length: 序列长度
+        save_path: 模型保存路径
+        log_dir: 日志目录
+    """
+    from moma_dataset import MOMADataset, create_moma_dataloader
+    from moma_policy import MomaBCPolicy, MomaVisionBCPolicy
+    
+    print("=" * 50)
+    print("MOMA 行为克隆训练")
+    print("=" * 50)
+    
+    # 创建数据加载器
+    print("\n[1/5] 加载数据集...")
+    train_loader = create_moma_dataloader(
+        data_root=data_root,
+        split="train",
+        batch_size=batch_size,
+        shuffle=True,
+        seq_length=seq_length
+    )
+    
+    val_loader = create_moma_dataloader(
+        data_root=data_root,
+        split="val",
+        batch_size=batch_size,
+        shuffle=False,
+        seq_length=seq_length
+    )
+    
+    # 创建模型
+    print("\n[2/5] 初始化模型...")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    if model_type == "vision":
+        model = MomaVisionBCPolicy().to(device)
+        print(f"使用视觉行为克隆模型 (设备: {device})")
+    else:
+        model = MomaBCPolicy().to(device)
+        print(f"使用状态行为克隆模型 (设备: {device})")
+    
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    
+    # 训练循环
+    print(f"\n[3/5] 开始训练 ({epochs} epochs)...")
+    best_val_loss = float('inf')
+    
+    log_path = Path(log_dir)
+    log_path.mkdir(parents=True, exist_ok=True)
+    
+    for epoch in range(epochs):
+        epoch_start = time.time()
+        
+        # 训练阶段
+        model.train()
+        train_loss = 0.0
+        num_batches = 0
+        
+        for batch in train_loader:
+            states = batch["states"].to(device)
+            actions = batch["actions"].to(device)
+            masks = batch["mask"].to(device)
+            
+            # 目标动作拆分
+            target_base = actions[:, :, :2]
+            target_arm = actions[:, :, 2:8]
+            target_gripper = actions[:, :, 8:9]
+            
+            if model_type == "vision":
+                images = batch.get("images", torch.zeros(1).to(device))
+                pred_base, pred_arm, pred_gripper = model(images, states[:, -1, :])
+                target_base = target_base[:, -1, :]
+                target_arm = target_arm[:, -1, :]
+                target_gripper = target_gripper[:, -1, :]
+            else:
+                loss = model.compute_loss(states, target_base, target_arm, target_gripper, masks)
+            
+            if model_type != "vision":
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
+                
+                train_loss += loss.item()
+                num_batches += 1
+        
+        scheduler.step()
+        avg_train_loss = train_loss / max(num_batches, 1)
+        
+        # 验证阶段
+        model.eval()
+        val_loss = 0.0
+        val_batches = 0
+        
+        with torch.no_grad():
+            for batch in val_loader:
+                states = batch["states"].to(device)
+                actions = batch["actions"].to(device)
+                masks = batch["mask"].to(device)
+                
+                target_base = actions[:, :, :2]
+                target_arm = actions[:, :, 2:8]
+                target_gripper = actions[:, :, 8:9]
+                
+                if model_type == "vision":
+                    images = batch.get("images", torch.zeros(1).to(device))
+                    pred_base, pred_arm, pred_gripper = model(images, states[:, -1, :])
+                    target_base = target_base[:, -1, :]
+                    target_arm = target_arm[:, -1, :]
+                    target_gripper = target_gripper[:, -1, :]
+                    loss = (torch.nn.functional.mse_loss(pred_base, target_base) +
+                            2 * torch.nn.functional.mse_loss(pred_arm, target_arm) +
+                            torch.nn.functional.mse_loss(pred_gripper, target_gripper))
+                else:
+                    loss = model.compute_loss(states, target_base, target_arm, target_gripper, masks)
+                
+                val_loss += loss.item()
+                val_batches += 1
+        
+        avg_val_loss = val_loss / max(val_batches, 1)
+        epoch_time = time.time() - epoch_start
+        
+        # 保存最佳模型
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            torch.save(model.state_dict(), save_path)
+            marker = " *"
+        else:
+            marker = ""
+        
+        if (epoch + 1) % 10 == 0 or epoch == 0:
+            print(f"Epoch {epoch+1:3d}/{epochs} | "
+                  f"Train Loss: {avg_train_loss:.4f} | "
+                  f"Val Loss: {avg_val_loss:.4f} | "
+                  f"LR: {scheduler.get_last_lr()[0]:.6f} | "
+                  f"Time: {epoch_time:.1f}s{marker}")
+    
+    print(f"\n[4/5] 训练完成！最佳验证损失: {best_val_loss:.4f}")
+    print(f"[5/5] 模型已保存: {save_path}")
+    
+    # 评估最终模型
+    print("\n开始评估...")
+    results = evaluate_moma_model(model, val_loader, device)
+    
+    return model, results
+
+
+if __name__ == "__main__":
+    DATA_ROOT = "./data/moma_release"
+    
+    model, results = train_moma_bc(
+        data_root=DATA_ROOT,
+        model_type="state_only",
+        epochs=100,
+        lr=1e-3,
+        batch_size=64
+    )
+```
+
+---
+
+## 7. 练习题
+
+### 选择题
+
+1. **MOMA 的全称是什么？**
+   - A. Multi-Object Multi-Agent
+   - B. Multi-Object Mobile Manipulation
+   - C. Mobile Operation Manipulation Agent
+   - D. Multi-Modal Object Manipulation
+
+2. **MOMA 系列不包含以下哪个组成部分？**
+   - A. MOMA（基础数据集）
+   - B. MOMA-Challenge（竞赛评测体系）
+   - C. MOMA-Sim（仿真数据集）
+   - D. MOMA-Large（大规模版本）
+
+3. **MOMA 的任务中，L2 级别代表什么类型的任务？**
+   - A. 单步操作
+   - B. 两步操作
+   - C. 多步操作
+   - D. 长程任务
+
+4. **MOMA 轨迹数据中，底盘状态包含几个自由度？**
+   - A. 1（只有 x）
+   - B. 2（x, y 位置）
+   - C. 3（x, y, theta）
+   - D. 6（6-DOF 位姿）
+
+5. **MOMA-Challenge 综合评分中，任务成功率（SR）的权重是多少？**
+   - A. 20%
+   - B. 30%
+   - C. 40%
+   - D. 50%
+
+### 填空题
+
+6. **MOMA 轨迹数据中，状态向量由底盘状态、臂部状态和夹爪状态三部分组成，其中臂部状态维度为 ________ 维。**
+
+7. **MOMA-Large 中，约 60% 为真实遥操作数据，约 40% 为 ________ 数据。**
+
+8. **MOMA 的任务成功判定中，物体位置误差阈值通常设为 ________（单位：厘米）。**
+
+9. **MOMA 的数据格式规范中，`task.json` 文件定义了 ________ 的完整描述。**
+
+10. **MomaBCPolicy 网络的输出包括：底盘动作（2维）、臂部动作（6维）和 ________（1维）。**
+
+### 简答题
+
+11. **简述 MOMA 与此前学习的 RH20T、RoboTurk 数据集在任务类型上的主要区别。**
+
+12. **说明 MOMA-Large 中仿真数据增强的方法及其在训练大规模模型中的作用。**
+
+13. **解释 MOMA-Challenge 综合评分公式中各指标权重设计的依据。**
+
+14. **为什么移动机械臂操作比固定基座机械臂操作更具挑战性？**
+
+15. **简述 MomaVisionBCPolicy 中视觉编码器与状态融合的设计思路。**
+
+### 编程题
+
+16. **编写代码实现按场景类型过滤 MOMA episode**：
+    - 输入：episode 列表、场景类型列表
+    - 输出：过滤后的 episode 列表
+    - 要求：场景类型完全匹配
+
+17. **实现一个计算 MOMA 轨迹总导航距离的函数**：
+    - 输入：轨迹数据（包含 base_x, base_y）
+    - 输出：底盘总移动距离（米）
+
+18. **实现一个简单的任务成功率评估函数**：
+    - 输入：预测动作序列、目标动作序列、误差阈值
+    - 输出：成功率（0~1）
+
+---
+
+## 8. 练习题答案
+
+### 选择题
+
+1. **答案：B**
+   - MOMA 全称为 Multi-Object Mobile Manipulation（多目标移动机械臂操作）
+
+2. **答案：C**
+   - MOMA 系列包含 MOMA、MOMA-Challenge 和 MOMA-Large，不包含 MOMA-Sim
+
+3. **答案：B**
+   - L1=单步操作、L2=两步操作、L3=多步操作、L4=长程任务
+
+4. **答案：C**
+   - 底盘状态包含 x, y 位置和 theta 朝向角，共 3 个自由度
+
+5. **答案：C**
+   - 任务成功率（SR）的权重为 40%
+
+### 填空题
+
+6. **答案：6**
+   - 6 个关节角度
+
+7. **答案：仿真生成（或 synthetic）**
+
+8. **答案：5（厘米）**
+
+9. **答案：任务（或 task）**
+
+10. **答案：夹爪动作**
+
+### 简答题
+
+11. **MOMA 与 RH20T/RoboTurk 的主要区别**：
+
+| 维度 | RH20T / RoboTurk | MOMA |
+|------|------------------|------|
+| 基座类型 | 固定基座 | 移动基座（带底盘） |
+| 操作空间 | 局部工作空间 | 全局室内空间 |
+| 任务结构 | 单步或短序列 | 多步复合任务 |
+| 导航需求 | 无需导航 | 需要自主导航 |
+| 协调难度 | 只需协调臂部 | 需同时协调底盘+臂部 |
+
+12. **仿真数据增强的作用**：
+    - 覆盖长尾场景（罕见物体组合、危险操作等）
+    - 大幅降低数据采集成本
+    - 提供多样化的任务配置
+    - 所有仿真数据经人工验证确保可执行性
+
+13. **指标权重设计依据**：
+    - SR 40%：任务成功是核心指标，权重最高
+    - OS 20%：物体偏移反映任务完成质量
+    - EE 15%：执行效率反映算法实时性
+    - TS 10%：平滑度反映机器人运动质量
+    - CR 15%：碰撞率反映安全性
+
+14. **移动机械臂更具挑战性的原因**：
+    - 需要同时协调底盘移动和臂部操作两个子系统
+    - 导航与操作需要紧密配合
+    - 环境感知范围更大，遮挡问题更严重
+    - 动作空间更大（8-DOF vs 6-DOF）
+    - 存在底盘定位误差累积问题
+
+15. **视觉编码器与状态融合设计**：
+    - 使用轻量 CNN 提取图像特征
+    - 全局池化将特征压缩到固定维度
+    - 与状态向量拼接后通过融合网络
+    - 融合网络输出共享特征，供各动作头预测
+
+### 编程题答案
+
+16. **按场景类型过滤**：
+
+```python
+def filter_by_scene_type(episodes: list, scene_types: list) -> list:
+    """按场景类型过滤 episode"""
+    filtered = []
+    
+    for ep in episodes:
+        scene_id = ep.get("scene_id", "")
+        scene_type = scene_id.split("_")[0] if scene_id else ""
+        
+        if scene_type in scene_types:
+            filtered.append({
+                "path": str(ep["path"]),
+                "scene_id": scene_id,
+                "scene_type": scene_type,
+                "task_id": ep.get("task_id", "unknown"),
+                "num_objects": ep.get("num_objects", 0)
+            })
+    
+    print(f"场景类型 {scene_types}: {len(filtered)} / {len(episodes)} episodes")
+    return filtered
+```
+
+17. **计算轨迹总导航距离**：
+
+```python
+import numpy as np
+
+def compute_navigation_distance(trajectory: dict) -> float:
+    """
+    计算 MOMA 轨迹的总导航距离
+    
+    参数:
+        trajectory: 轨迹数据字典，包含 base_state (T, 3)
+    
+    返回:
+        total_distance: 总移动距离（米）
+    """
+    base_state = trajectory["base_state"]  # (T, 3): x, y, theta
+    
+    positions = base_state[:, :2]  # 只取 x, y 位置
+    
+    # 计算相邻帧之间的位移
+    diffs = np.diff(positions, axis=0)
+    
+    # 计算每帧的移动距离
+    step_distances = np.linalg.norm(diffs, axis=1)
+    
+    # 总距离
+    total_distance = step_distances.sum()
+    
+    return float(total_distance)
+```
+
+18. **任务成功率评估**：
+
+```python
+import numpy as np
+
+def compute_task_success_rate(
+    predicted_actions: np.ndarray,
+    target_actions: np.ndarray,
+    base_threshold: float = 0.05,
+    arm_threshold: float = 0.1
+) -> float:
+    """
+    计算任务成功率
+    
+    参数:
+        predicted_actions: (T, 8) 预测动作（底盘2维 + 臂部6维）
+        target_actions: (T, 8) 目标动作
+        base_threshold: 底盘动作误差阈值（米）
+        arm_threshold: 臂部动作误差阈值（弧度）
+    
+    返回:
+        success_rate: 成功率（0~1）
+    """
+    T = predicted_actions.shape[0]
+    
+    if T == 0:
+        return 0.0
+    
+    # 拆分底盘和臂部动作
+    pred_base = predicted_actions[:, :2]
+    pred_arm = predicted_actions[:, 2:8]
+    
+    tgt_base = target_actions[:, :2]
+    tgt_arm = target_actions[:, 2:8]
+    
+    # 计算误差
+    base_error = np.linalg.norm(pred_base - tgt_base, axis=1)
+    arm_error = np.linalg.norm(pred_arm - tgt_arm, axis=1)
+    
+    # 判断每帧是否成功
+    base_success = base_error < base_threshold
+    arm_success = arm_error < arm_threshold
+    
+    # 任务成功：关键步骤成功（取后 1/3 帧的平均）
+    key_frames = T * 2 // 3
+    if key_frames > 0:
+        key_base_success = base_error[key_frames:].mean() < base_threshold
+        key_arm_success = arm_error[key_frames:].mean() < arm_threshold
+        success_rate = float(key_base_success and key_arm_success)
+    else:
+        success_rate = 0.0
+    
+    return success_rate
+```
+
+---
+
+## 本章小结
+
+本节课程系统介绍了 MOMA（Multi-Object Mobile Manipulation）系列数据集：
+
+1. **数据集概述**：MOMA 是专门针对移动机械臂的大规模多模态遥操作数据集，包含 MOMA、MOMA-Challenge 和 MOMA-Large 三个组成部分，涵盖 50+ 场景、1,000+ 任务类型，是目前移动操作领域最具影响力的 benchmark
+
+2. **MOMA-Challenge**：标准化竞赛评测体系定义了任务成功、物体偏移、执行效率、轨迹平滑度和碰撞率五个评估维度，综合评分权重为 40%/20%/15%/10%/15%
+
+3. **MOMA-Large**：超大规模版本，包含 200+ 场景、50,000+ episodes、700 小时数据，其中 60% 为真实遥操作数据、40% 为仿真生成数据
+
+4. **数据格式**：轨迹数据包含底盘状态（x, y, theta）、臂部状态（6 关节）、末端执行器位姿和夹爪状态；场景描述采用 JSON 格式定义物体、障碍物和可放置区域
+
+5. **使用方法**：通过 conda 环境安装依赖，官方下载脚本获取数据，离线评测和在线仿真两种执行模式
+
+6. **代码实战**：实现了完整的 MOMA 数据加载器（支持多模态、难度过滤、归一化）、行为克隆策略网络（MomaBCPolicy 和 MomaVisionBCPolicy）、评估脚本和训练脚本
+
+7. **练习题**：涵盖了 MOMA 的基本概念、评测指标、数据格式、模型设计和实战应用，通过选择题、填空题、简答题和编程题全面检验学习效果
+
+---
+
+**相关资源**：
+
+- MOMA 官网：https://moma-dataset.github.io/
+- GitHub 仓库：https://github.com/moma-dataset/MOMA
+- MOMA-Challenge 排行榜：https://moma-challenge.aiservice.com/leaderboard
+- PyBullet 移动机械臂仿真：https://pybullet.org/
+- Mobile Manipulator 综述：[综述论文链接]
