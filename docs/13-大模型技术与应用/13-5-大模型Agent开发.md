@@ -1069,4 +1069,251 @@ class Message:
             self.timestamp = datetime.now()
 
 # ============================================================
-# 各
+专业 Agent
+# ============================================================
+
+class ResearchAgent:
+    """研究 Agent：负责信息调研"""
+    name = "research_agent"
+
+    def process(self, task: str) -> str:
+        """处理研究任务"""
+        # 实际项目中可接入搜索引擎或知识库
+        return f"调研完成：关于 '{task}' 的最新研究表明，该领域正在快速发展。"
+
+class CoderAgent:
+    """编码 Agent：负责代码实现"""
+    name = "coder_agent"
+
+    def process(self, task: str) -> str:
+        """处理编码任务"""
+        return f"代码实现完成：已按照要求完成 '{task}' 的核心功能开发。"
+
+class CriticAgent:
+    """评审 Agent：负责结果评审"""
+    name = "critic_agent"
+
+    def process(self, code: str) -> str:
+        """处理评审任务"""
+        return f"评审意见：代码整体质量良好，建议在错误处理和性能方面进一步优化。"
+
+# ============================================================
+# Multi-Agent 协调器
+# ============================================================
+
+class MultiAgentOrchestrator:
+    """多Agent协调器"""
+
+    def __init__(self):
+        self.agents = {
+            "research_agent": ResearchAgent(),
+            "coder_agent": CoderAgent(),
+            "critic_agent": CriticAgent()
+        }
+        self.message_bus = MessageBus()
+
+    def run(self, task: str) -> str:
+        """运行多Agent协作流程"""
+        print(f"收到任务: {task}")
+
+        # 1. 任务分解
+        subtasks = decompose_task(task)
+        print(f"任务分解为 {len(subtasks)} 个子任务")
+
+        results = {}
+
+        # 2. 分发给各专业Agent执行
+        for st in subtasks:
+            agent_name = st["agent"]
+            agent = self.agents[agent_name]
+            print(f"分配任务给 {agent_name}...")
+
+            # 执行任务（实际项目中通过消息总线传递）
+            result = agent.process(st["description"])
+            results[agent_name] = result
+            print(f"{agent_name} 完成: {result[:50]}...")
+
+        # 3. 整合结果
+        final_report = self._generate_report(task, results)
+        return final_report
+
+    def _generate_report(self, task: str, results: Dict) -> str:
+        """生成最终报告"""
+        report = [f"# 任务执行报告: {task}", ""]
+        report.append("## 执行摘要")
+        for agent_name, result in results.items():
+            report.append(f"- **{agent_name}**: {result}")
+        report.append("")
+        report.append("## 结论")
+        report.append("任务已通过多Agent协作完成，各Agent分工明确，协调顺畅。")
+        return "\n".join(report)
+
+# ============================================================
+# 运行示例
+# ============================================================
+
+if __name__ == "__main__":
+    orchestrator = MultiAgentOrchestrator()
+
+    task = "调研具身智能最新进展，并实现一个演示系统，最后进行测试验证"
+    result = orchestrator.run(task)
+    print("\n" + "="*60)
+    print("最终报告:")
+    print("="*60)
+    print(result)
+
+---
+
+## 7. 练习题
+
+### 题目一：概念理解
+
+1. 什么是AI Agent？它与传统程序有什么区别？
+2. ReAct框架的核心思想是什么？请简述Thought-Action-Observation循环。
+3. LangChain Agent中，工具（Tools）的作用是什么？如何定义一个工具？
+
+### 题目二：编程实践
+
+4. 使用LangChain实现一个具有天气查询和计算器功能的Agent。
+5. 不依赖LangChain，手动实现一个简单的ReAct Agent（需要包含工具注册表和执行循环）。
+6. 实现一个多Agent协作系统，包含研究Agent、编码Agent和评审Agent，通过消息总线进行通信。
+
+### 题目三：系统设计
+
+7. 设计一个具身智能机器人Agent系统，要求：
+   - 具备短期记忆和长期记忆
+   - 能够调用传感器工具获取环境信息
+   - 能够调用运动控制工具操作机器人
+   - 请画出系统架构图并说明各组件职责
+
+### 题目四：分析思考
+
+8. 讨论ReAct、Plan-then-Execute和Multi-Agent三种Agent范式的优缺点及适用场景。
+9. 为什么说"工具描述（Tool Description）的质量直接影响Agent的工具选择准确性"？
+10. 在设计Multi-Agent系统时，需要考虑哪些关键问题？
+
+---
+
+## 8. 参考答案
+
+### 题目一：概念理解
+
+**1. 什么是AI Agent？它与传统程序有什么区别？**
+
+AI Agent是一种能够感知环境、进行自主决策、执行操作并基于反馈持续优化的智能系统。与传统程序的区别：
+
+| 区别 | 传统程序 | AI Agent |
+|------|----------|----------|
+| 流程 | 固定流程，预先确定 | 动态决策，运行时决定 |
+| 交互 | 被动响应用户输入 | 主动规划，持续迭代 |
+| 适应性 | 固定逻辑，无法适应新情况 | 可根据反馈调整策略 |
+| 工具使用 | 无 | 可调用外部工具 |
+
+**2. ReAct框架的核心思想是什么？**
+
+ReAct（Reasoning + Acting）的核心思想是将推理和行动有机结合：
+
+- **Thought**：分析当前状态，决定是否需要行动
+- **Action**：执行具体的工具调用
+- **Observation**：接收行动结果，更新Agent认知
+
+三者形成闭环，使Agent能够在推理指导下行动，通过行动结果反哺推理过程。
+
+**3. 工具（Tools）的作用及定义方式**
+
+工具是Agent与外部世界交互的接口。使用`@tool`装饰器定义：
+
+```python
+from langchain_core.tools import tool
+
+@tool
+def search_weather(location: str) -> str:
+    """查询城市天气"""
+    return "天气信息..."
+```
+
+### 题目二：编程实践
+
+**4. LangChain Agent实现（参考6.1节代码）**
+
+见6.1节完整代码示例，包含`get_weather`、`calculate`、`search_knowledge`三个工具。
+
+**5. 手动实现ReAct Agent（参考6.2节代码）**
+
+见6.2节完整代码示例，包含`ToolRegistry`类、`ReActAgent`类和完整执行循环。
+
+**6. 多Agent协作系统（参考6.4节代码）**
+
+见6.4节完整代码示例，包含`ResearchAgent`、`CoderAgent`、`CriticAgent`和`MultiAgentOrchestrator`。
+
+### 题目三：系统设计
+
+**7. 具身智能机器人Agent系统设计**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 具身智能机器人Agent架构                  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐│
+│   │  感知模块   │───▶│  规划模块   │───▶│  执行模块   ││
+│   │ Perception  │    │ Planning   │    │ Execution   ││
+│   └─────────────┘    └─────────────┘    └─────────────┘│
+│         │                  │                  │        │
+│         └──────────────────┴──────────────────┘        │
+│                         │                               │
+│                   ┌─────────────┐                       │
+│                   │   LLM大脑   │                       │
+│                   └─────────────┘                       │
+│                         │                               │
+│   ┌─────────────────────┼─────────────────────┐        │
+│   │                     │                     │        │
+│   ▼                     ▼                     ▼        │
+│ ┌──────────┐      ┌──────────┐      ┌──────────┐     │
+│ │ 传感器   │      │ 运动控制  │      │ 视觉识别  │     │
+│ │ 工具     │      │ 工具     │      │ 工具     │     │
+│ └──────────┘      └──────────┘      └──────────┘     │
+│                         │                               │
+│   ┌─────────────────────┼─────────────────────┐        │
+│   │              记忆系统                        │        │
+│   │  ┌──────────┐      ┌──────────┐          │        │
+│   │  │ 短期记忆  │      │ 长期记忆  │          │        │
+│   │  │(对话历史) │      │(向量数据库│          │        │
+│   │  └──────────┘      └──────────┘          │        │
+│   └─────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────┘
+```
+
+**组件职责**：
+- **感知模块**：接收传感器数据，构建环境状态表示
+- **规划模块**：基于LLM进行任务分解和行动规划
+- **执行模块**：将决策转化为具体的控制指令
+- **记忆系统**：短期记忆管理会话上下文，长期记忆存储知识经验
+- **工具层**：封装传感器读取、运动控制、视觉识别等能力
+
+### 题目四：分析思考
+
+**8. 三种Agent范式对比**
+
+| 范式 | 优点 | 缺点 | 适用场景 |
+|------|------|------|----------|
+| **ReAct** | 可解释性强，可实时纠错 | 循环次数多时效率低 | 需要工具调用的复杂推理任务 |
+| **Plan-then-Execute** | 规划清晰，执行效率高 | 中途无法调整，灵活性差 | 目标明确、步骤固定的任务 |
+| **Multi-Agent** | 专业分工，可并行处理 | 通信开销大，调试复杂 | 复杂多领域任务 |
+
+**9. 工具描述质量的重要性**
+
+工具描述是LLM选择工具的唯一依据。好的描述应该包含：
+- 工具适用场景
+- 参数含义和格式要求
+- 返回值说明
+
+描述不清晰会导致LLM错误选择工具或生成错误参数。
+
+**10. Multi-Agent系统设计关键问题**
+
+- **通信机制**：选择合适的Agent间通信方式
+- **任务分解**：如何将复杂任务合理分配给专业Agent
+- **协调机制**：协调Agent如何监控和管理子任务执行
+- **错误处理**：某个Agent失败时的恢复策略
+- **一致性**：多Agent协作时如何保证结果一致性
