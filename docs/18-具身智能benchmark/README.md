@@ -11,16 +11,18 @@
 | 序号 | 课程 | 状态 | 说明 |
 |------|------|------|------|
 | 18-1 | [具身智能 Benchmark 概述](./18-1-具身智能benchmark概述.md) | ✅ | Benchmark 概念、主流 Benchmark 详解、评估指标、代码实战 |
-| 18-2 | [CALVIN 基准](./18-2-CALVIN-基准.md) | 🔄 | 语言条件化长程任务链，ABCD 四级难度 |
-| 18-3 | [Franka Kitchen 环境](./18-3-Franka-Kitchen-环境.md) | ⏳ | 多步厨房操作任务，真实机器人仿真 |
-| 18-4 | [RLBench 基准](./18-4-RLBench-基准.md) | ⏳ | 101 个视觉引导操作任务，MoveIt! 集成 |
-| 18-5 | [Benchmark 项目实战](./18-5-Benchmark-项目实战.md) | ⏳ | 综合 Benchmark 评测实战 |
+| 18-2 | [CALVIN 基准](./18-2-CALVIN-基准.md) | ✅ | CALVIN 数据集、环境配置、基础任务与评测 |
+| 18-3 | [Franka Kitchen 环境](./18-3-Franka-Kitchen-环境.md) | ✅ | 多步厨房操作任务，真实机器人仿真 |
+| 18-3b | [MetaWorld 与多任务学习评估](./18-3-MetaWorld与多任务学习评估.md) | ✅ | ML10/ML45 协议、元学习泛化、MAML 与 PEARL |
+| 18-4 | [CALVIN 与长程任务链评估](./18-4-CALVIN与长程任务链评估.md) | ✅ | ABCD 四级难度体系、语言泛化、零样本迁移、CAPS、Language Table |
+| 18-5 | [RLBench 基准](./18-4-RLBench-基准.md) | ✅ | 101 个视觉引导操作任务，MoveIt! 集成 |
+| 18-6 | [Benchmark 项目实战](./18-5-Benchmark-项目实战.md) | ✅ | 综合 Benchmark 评测实战 |
 
 ## 开发进度
 
-- ✅ 已完成：1/5
-- 🔄 编写中：1（18-2）
-- ⏳ 待编写：3
+- ✅ 已完成：6/6
+- 🔄 编写中：0
+- ⏳ 待编写：0
 
 ## 前置知识
 
