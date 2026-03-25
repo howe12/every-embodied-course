@@ -186,3 +186,4 @@
 - 2026-03-26：14-4 机器人强化学习训练实战 编写完成 ✅（机器人RL概述、ROS2+Gymnasium集成、TurtleBot3 PPO导航、UR5 SAC机械臂抓取、Sim2Real域随机化、练习题+答案）
 - 2026-03-26：15-1 模仿学习基础（行为克隆与逆强化学习）V2.0 编写完成 ✅（模仿学习概述、BC详解、分布偏移问题、DAgger算法、IRL逆强化学习理论、行为克隆/DAgger/IRL三个PyTorch代码实战、5道选择题+3道简答题+完整答案）
 - 2026-03-26：14-7 安全约束与鲁棒强化学习 V2.0 编写完成 ✅（安全RL概述、CMDP建模、Lagrangian方法、CPO、Trust Region安全扩展、Reward Shaping、安全势函数、鲁棒RL、参数不确定性、DRO、域随机化、机器人安全应用（碰撞/力矩/人机协作）、Lagrangian安全PPO实现、约束优化护栏、安全奖励函数设计、5道练习题+完整答案）
+- 2026-03-26：15-2 GAN与对抗模仿学习 V2.0 编写完成 ✅（GAN基础/GAN模式崩溃/GAIL原理/奖励函数/收敛性/AIRL/Wasserstein GAIL/能量模型/Dropout/PyTorch完整代码/MuJoCo训练示例/5道选择题+3道简答题+完整答案；网络原因git push失败，commit已就绪）
