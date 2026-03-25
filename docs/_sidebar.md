@@ -156,7 +156,7 @@
 
 - [17-VLN大模型](17-VLN大模型/README.md)
   - [17-1-VLN基础介绍](17-VLN大模型/17-1-VLN基础介绍.md)
-  - [17-2-CLIPORT算法解析](17-VLN大模型/17-2-CLIPORT-算法解析.md)
+  - [17-2-VLN进阶模型与训练策略](17-VLN大模型/17-2-VLN进阶模型与训练策略.md)
   - [17-3-VLN视觉语言导航](17-VLN大模型/17-3-VLN-视觉语言导航.md)
   - [17-4-SWIN-transformer](17-VLN大模型/17-4-SWIN-transformer.md)
   - [17-5-VLN数据集与评估](17-VLN大模型/17-5-VLN-数据集与评估.md)
