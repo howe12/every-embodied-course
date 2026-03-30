@@ -2,275 +2,570 @@
 
 ## 概述
 
-AGIBOT WORLD Challenge@ICRA2026 是由智元机器人（AgiBot）举办的具身智能机器人国际竞赛，作为 ICRA 2026 的官方竞赛项目。大赛以 **"即刻开赛！"** 为口号，汇聚全球顶尖团队共赴智能机器人竞技盛宴。
-
-### 赛事规模
-
-- **总奖池**：**53万美元** 💰
-- **额外福利**：表现突出的队伍将获得智元机器人采购代金券
-
-### 两大核心赛道
-
-| 赛道 | 简介 |
-|------|------|
-| **Reasoning to Action** | 推理-操作赛道，评估模型的推理和动作执行能力 |
-| **World Model** | 世界模型赛道，聚焦具身世界模型的核心能力 |
+AGIBOT WORLD Challenge@ICRA2026 是由智元机器人举办的具身智能国际竞赛，作为 ICRA 2026 官方赛事。本课程面向零基础小白，从知识点梳理到实战应用，帮助你快速入门并参与竞赛。
 
 ---
 
-## 赛道一：Reasoning to Action（推理-操作赛道）
+## 一、竞赛扫盲：5分钟了解这是什么比赛
 
-### 赛道目标
+### 1.1 比赛在做什么？
 
-本赛道旨在评估模型的推理和动作执行能力，包括：
-- **线上仿真赛段**：基于仿真平台进行模型评测
-- **线下真机赛段**：在真实机器人上验证模型性能
+想象一下：你给机器人一段文字指令，比如"把桌子上的苹果放进篮子里"，机器人需要：
+1. **看懂**你在说什么（理解）
+2. **规划**该怎么做（推理）
+3. **执行**具体的动作（操作）
 
-参赛者将基于 AGIBOT WORLD 开源数据集，训练能够解决一系列复杂任务的模型。
+这就是 **Reasoning to Action（推理-操作赛道）** 考察的核心能力。
 
-### 技术特点
+### 1.2 为什么叫"Reasoning to Action"？
 
-- 聚焦 **Sim2Real Gap（仿真到真实差距）**
-- 实现从 **开放词汇理解** 到 **真实物理交互** 的稳健泛化
-- 赛题结合落地项目与 **Genie Sim 3.0** 仿真平台设计
-- 覆盖：物流、工业、超市、餐饮、家居等常见场景
+| 传统方式 | Reasoning to Action |
+|----------|---------------------|
+| 直接输出动作 | 先"思考"再行动 |
+| 动作和推理分离 | 推理过程用动作描述 |
+| 难以解释 | 可追溯、可解释 |
 
-### 任务示例（部分）
-
-以下是该赛道涉及的实际任务类型，通过图片展示了具体操作场景：
-
-| 任务 | 描述 |
-|------|------|
-| 物流分拣 | 机器人进行物品分类和分拣操作 |
-| 倒工件 | 将工件从一个容器倒入另一个容器 |
-| 上货并扶正倾斜商品 | 整理货架，将倾斜商品扶正 |
-| 铲爆米花 | 精细操作，模拟爆米花铲取 |
-| 开门 | 门把手操作与开门动作 |
-| 清理书桌 | 整理桌面物品 |
-| 双手端锅 | 双臂协同作业 |
-
-> 💡 左右滑动查看更多任务示例
-
-### 评测工具：Genie Sim 3.0
-
-业内首个大语言模型驱动的开源仿真平台：
-
-- **数字孪生级高保真环境**：融合三维重建与视觉生成
-- **场景、资产和任务与测试服务器保持一致**
-- 支持参赛者进行 **本地闭环评估**
-- 使用智元自研具身大脑 **Genie Reasoner**
-- 实现基于 VLM 的 **全自动评测**
-
-> 🔗 官网：https://agibot-world.com/genie-sim
+简单说：机器人不仅要会做，还要会"思考怎么做"。
 
 ---
 
-## 赛道二：World Model（世界模型赛道）
+## 二、知识点地图：从零到参赛
 
-### 赛道目标
+### 2.1 学习路径图
 
-聚焦具身世界模型的核心能力——**基于机器人动作精准建模物理环境动态**。
+```
+                    ┌─────────────────────────────────────┐
+                    │       VLA (视觉-语言-动作模型)        │
+                    │   Vision-Language-Action Model        │
+                    └─────────────────┬─────────────────────┘
+                                      │
+          ┌───────────────────────────┼───────────────────────────┐
+          ▼                           ▼                           ▼
+    ┌───────────┐              ┌───────────┐              ┌───────────┐
+    │   视觉    │              │   语言    │              │   动作    │
+    │ Vision   │              │ Language │              │  Action   │
+    └─────┬─────┘              └─────┬─────┘              └─────┬─────┘
+          │                          │                          │
+          ▼                          ▼                          ▼
+    • 图像识别                • 自然语言理解            • 机器人控制
+    • 深度相机                • 指令解析                • 双臂协同
+    • 目标检测                • Prompt设计              • 轨迹规划
+```
 
-参赛者需基于 AGIBOT WORLD 数据集训练 **视频生成模型**，根据所提供的机器人真实观测与动作信号，生成机器人在 **10 组真实作业场景** 下的交互视频。
+### 2.2 必学知识点清单
 
-### 数据集
+#### 🔴 入门级（必须掌握）
 
-| 项目 | 说明 |
-|------|------|
-| 训练集 | 10 个不同任务组成，涵盖超 **30,000 条**真实轨迹 |
-| 交互类型 | 抓取、放置、推、拉等多样化的机器人-环境交互 |
-| 测试集 | 包含专家轨迹和不完美动作轨迹（如空抓、碰撞），全面评估泛化能力 |
+| 知识点 | 用途 | 学习难度 |
+|--------|------|----------|
+| Python 基础 | 写代码、处理数据 | ⭐ |
+| Linux 基础 | 跑代码、看日志 | ⭐ |
+| ROS2 基础 | 机器人通信 | ⭐⭐ |
+| 深度学习入门 | 理解模型原理 | ⭐⭐ |
 
-> 🔗 数据集：https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/WorldModel
+#### 🟡 进阶级（理解原理）
 
-### 基线模型：EVAC
+| 知识点 | 用途 | 学习难度 |
+|--------|------|----------|
+| Transformer | 模型架构 | ⭐⭐⭐ |
+| VLM (视觉语言模型) | 看图理解 | ⭐⭐⭐ |
+| VLA (视觉语言动作) | 端到端控制 | ⭐⭐⭐ |
+| 仿真平台 | 测试环境 | ⭐⭐⭐ |
 
-智元自研并开源的具身世界模型：
+#### 🟢 高级（优化提升）
 
-- **首个由机器人动作驱动的具身世界模型**
-- 基于全量 AGIBOT WORLD 数据进行预训练
-
-> 🔗 基线代码：https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline
-
-### 评测基准：EWMBench
-
-基于具身世界模型评测基准 **EWMBench** 进行评估：
-
-- **图像质量**
-- **场景一致性**
-- **轨迹遵循度**
-- 多维度全方位评估生成模型表现
-
-> 🔗 评测基准：https://github.com/AgibotTech/EWMBench
-
-### 评测服务器
-
-部署在 HuggingFace 上的评测服务器，排行榜单实时更新！
-
-> 🔗 评测服务器：https://huggingface.co/spaces/agibot-world/ICRA26WM
+| 知识点 | 用途 | 学习难度 |
+|--------|------|----------|
+| Action Chain-of-Thought | ACoT-VLA 核心 | ⭐⭐⭐⭐ |
+| 模仿学习 | 训练策略 | ⭐⭐⭐⭐ |
+| Sim2Real | 仿真到真实 | ⭐⭐⭐⭐ |
 
 ---
 
-## 数据集资源
+## 三、核心框架：ACoT-VLA 基线模型解析
 
-### Reasoning2Action 数据集
+### 3.1 ACoT-VLA 是什么？
+
+**ACoT-VLA** 是本次竞赛的基线模型，全称 **Action Chain-of-Thought for Vision-Language-Action Models**。
+
+> 论文：https://arxiv.org/abs/2601.11404
+> 代码：https://github.com/AgibotTech/ACoT-VLA
+
+### 3.2 为什么选它做基线？
+
+| 对比 | π₀ | π₀.₅ | ACoT-VLA (我们) |
+|------|-----|------|-----------------|
+| 空间泛化 | 79.6% | 70.3% | **91.2%** |
+| 物体泛化 | 21.1% | 41.7% | **62.5%** |
+| 平均 | 67.4% | 75.7% | **84.1%** |
+
+ACoT-VLA 在各类泛化测试中表现最优，特别适合竞赛。
+
+### 3.3 模型架构拆解
+
+```
+输入: "把红色积木放进盒子里"
+         │
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│                    VLM 主干网络                          │
+│              (视觉语言联合理解)                           │
+│   ┌─────────┐    ┌─────────┐    ┌─────────┐            │
+│   │ 图像输入 │───▶│ 视觉编码 │    │ 语言指令 │───▶│ 语言编码 ││   └─────────┘    └─────────┘    └─────────┘    └─────────┘│
+└─────────────────────────────┬───────────────────────────┘
+                              │
+          ┌───────────────────┴───────────────────┐
+          ▼                                       ▼
+┌─────────────────────┐               ┌─────────────────────┐
+│   EAR (显式推理器)   │               │   IAR (隐式推理器)   │
+│ Explicit Action     │               │ Implicit Action      │
+│ Reasoner            │               │ Reasoner            │
+│                     │               │                     │
+│ • 生成粗粒度轨迹     │               │ • 提取VLM内部表征   │
+│ • 提供运动提示       │               │ • 跨注意力建模      │
+└─────────┬───────────┘               └─────────┬───────────┘
+          │                                   │
+          └─────────────┬─────────────────────┘
+                        ▼
+              ┌─────────────────┐
+              │  Action Chain   │
+              │    of Thought   │
+              │   (动作链思考)   │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │    最终动作      │
+              │   控制机器人     │
+              └─────────────────┘
+```
+
+### 3.4 两个推理器详解
+
+#### EAR（显式动作推理器）
+
+**作用**：像人类"心里想"一样，生成粗粒度的动作计划
+
+```python
+# 伪代码示例
+def EAR_forward(observation, instruction):
+    # 输入: 相机看到的图像 + "把苹果放进篮子"
+    # 输出: "先伸手 → 抓住苹果 → 移动到篮子上方 → 松开"
+    
+    trajectory = synthesize_motion_plan(observation, instruction)
+    return trajectory  # 动作意图序列
+```
+
+#### IAR（隐式动作推理器）
+
+**作用**：从 VLM 内部表征中"挖掘"动作知识
+
+```python
+# 伪代码示例
+def IAR_forward(vlm_hidden_states):
+    # 输入: VLM 各层的特征表示
+    # 输出: 潜在动作先验
+    
+    action_prior = cross_attention_model(vlm_hidden_states)
+    return action_prior  # 动作概率分布
+```
+
+### 3.5 Action Chain-of-Thought（动作链思考）
+
+**核心思想**：推理过程本身就是动作意图的表达
+
+```
+传统推理: "我应该拿那个红色的东西" 
+          → 没有具体动作信息
+
+ACoT推理: "伸手 → 抓取 → 举起 → 移动 → 放下"
+          → 直接可执行的动序列
+```
+
+---
+
+## 四、测试流程：从小白到参赛
+
+### 4.1 完整流程图
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   准备环境   │────▶│  下载数据   │────▶│  运行基线   │────▶│  提交成绩   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+      │                   │                   │                   │
+      ▼                   ▼                   ▼                   ▼
+  • Docker            • HuggingFace       • 推理服务           • 打包镜像
+  • NVIDIA Isaac      • ModelScope        • 仿真评测           • 上传仓库
+  • Genie Sim 3.0     • 数据格式转换       • 本地测试           • 服务器评测
+```
+
+### 4.2 环境准备（Step 1）
+
+#### 硬件要求
+
+| 配置 | 最低 | 推荐 |
+|------|------|------|
+| 系统 | Ubuntu 22.04 | Ubuntu 22.04 |
+| GPU | RTX 4080 (32GB) | RTX 4090D (64GB) |
+| 内存 | 32GB | 64GB |
+| 存储 | 50GB SSD | 1TB NVMe SSD |
+
+#### 软件安装
+
+```bash
+# 1. 克隆 Genie Sim
+git clone https://github.com/AgibotTech/genie_sim.git
+cd genie_sim
+
+# 2. 下载资产（来自 ModelScope）
+# 访问: https://modelscope.cn/datasets/agibot_world/GenieSimAssets
+# 下载后放入: genie_sim/source/geniesim/assets
+
+# 3. 构建 Docker 镜像（推荐方式）
+cd genie_sim
+docker build -f ./scripts/dockerfile -t registry.agibot.com/genie-sim/open_source:latest .
+
+# 4. 启动容器
+./scripts/start_gui.sh
+
+# 5. 进入容器
+./scripts/into.sh
+
+# 6. 运行 demo 测试环境
+omni_python source/geniesim/app/app.py --config ./source/geniesim/config/select_color.yml
+```
+
+### 4.3 数据下载（Step 2）
+
+```bash
+# Reasoning2Action 数据集
+# HuggingFace
+git clone https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026
+
+# ModelScope
+git clone https://modelscope.cn/datasets/AgiBotWorld/AgiBotWorldChallenge-2026
+
+# 数据格式说明
+# ├── observations/      # 图像观测
+# ├── actions/           # 机器人动作
+# ├── language/          # 语言指令
+# └── metadata/          # 任务信息
+```
+
+### 4.4 运行基线（Step 3）
+
+#### 启动推理服务
+
+```bash
+# 在容器中启动推理服务
+cd openpi
+
+# 计算归一化统计量
+uv run scripts/compute_norm_stats.py --config-name=acot_icra_simulation_challenge_reasoning_to_action
+
+# 启动训练（如需微调）
+bash scripts/train.sh acot_icra_simulation_challenge_reasoning_to_action my_experiment
+
+# 启动推理服务（默认端口 8999）
+uv run scripts/serve_policy.py --host='0.0.0.0' --port=8999 \
+    policy:checkpoint \
+    --policy.config=acot_icra_simulation_challenge_reasoning_to_action \
+    --policy.dir ./checkpoints/select_color/29999
+```
+
+#### 运行仿真评测
+
+```bash
+# 另开终端，启动仿真容器
+./scripts/start_gui.sh
+
+# 配置 VLM 评分（如需）
+export BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+export API_KEY=your_api_key
+export VL_MODEL=qwen3-vl-plus
+
+# 运行 ICRA 任务
+./scripts/into.sh  # 进入仿真容器
+cd /geniesim/main
+./scripts/run_icra_tasks.sh
+
+# 收集评分
+python3 scripts/stat_average.py
+```
+
+### 4.5 提交成绩（Step 4）
+
+```bash
+# 1. 构建你的 Docker 镜像
+docker build -t your-docker-registry.com/your-project:v1 .
+
+# 2. 推送到公开仓库
+docker push your-docker-registry.com/your-project:v1
+
+# 3. 在测试服务器提交
+# 访问: https://agibot-world.com/challenge2026/reasoning2action
+# 点击 "New Submission"
+# 填写镜像 URL
+
+# 4. 查看结果
+# 点击 "My Submissions" 查看评测结果
+# 点击 "Leaderboard" 查看排名
+```
+
+---
+
+## 五、基线代码分析
+
+### 5.1 代码结构
+
+```
+ACoT-VLA/
+├── src/openpi/
+│   ├── training/           # 训练相关
+│   │   ├── config.py      # 配置文件
+│   │   └── trainer.py     # 训练器
+│   ├── inference/         # 推理相关
+│   │   ├── policy.py     # 策略模型
+│   │   └── server.py     # 推理服务
+│   └── models/           # 模型定义
+│       ├── vlm.py        # VLM 主干
+│       ├── ear.py        # EAR 推理器
+│       └── iar.py        # IAR 推理器
+├── scripts/
+│   ├── train.sh          # 训练脚本
+│   └── server.sh         # 服务脚本
+└── configs/
+    └── acot_icra_*.yaml   # ICRA 专用配置
+```
+
+### 5.2 关键配置文件
+
+```python
+# src/openpi/training/config.py
+
+# 竞赛专用配置
+config_name = "acot_icra_simulation_challenge_reasoning_to_action"
+
+# 配置内容示例
+model:
+  vlm_backbone: "Qwen/Qwen2-VL-7B"  # VLM 主干
+  ear_hidden_dim: 256                # EAR 隐层维度
+  iar_cross_attention_layers: 4       # IAR 跨注意力层数
+
+training:
+  batch_size: 16
+  learning_rate: 1e-4
+  num_epochs: 100
+
+data:
+  dataset_path: "agibot_world/Reasoning2Action-Sim"
+  image_resolution: [224, 224]
+```
+
+### 5.3 推理服务核心代码
+
+```python
+# openpi/src/openpi/inference/policy.py (简化伪代码)
+
+class ACoTPolicy:
+    def __init__(self, config):
+        # 1. 加载 VLM 主干
+        self.vlm = load_vlm(config.vlm_backbone)
+        
+        # 2. 初始化 EAR（显式推理器）
+        self.ear = ExplicitActionReasoner(
+            hidden_dim=config.ear_hidden_dim
+        )
+        
+        # 3. 初始化 IAR（隐式推理器）
+        self.iar = ImplicitActionReasoner(
+            cross_attention_layers=config.iar_cross_attention_layers
+        )
+    
+    def forward(self, observation, instruction):
+        """
+        输入: 图像观测 + 语言指令
+        输出: 机器人动作
+        """
+        # Step 1: VLM 编码
+        vlm_features = self.vlm.encode(observation, instruction)
+        
+        # Step 2: EAR 生成动作意图
+        explicit_plan = self.ear(vlm_features)
+        
+        # Step 3: IAR 提取隐式先验
+        implicit_prior = self.iar(vlm_features)
+        
+        # Step 4: 融合 + 解码动作
+        action = self.decode(explicit_plan, implicit_prior)
+        
+        return action
+```
+
+---
+
+## 六、理论知识关联
+
+### 6.1 知识点 → 对应理论
+
+| 功能模块 | 涉及理论 | 参考课程 |
+|----------|----------|----------|
+| VLM 主干 | Transformer, Attention | 10-14 深度学习, 10-20 VLM |
+| 动作预测 | 强化学习, 策略网络 | 14-1~14-3 强化学习 |
+| 仿真环境 | Isaac Sim, ROS2 | 07-2~07-4 仿真技术 |
+| 双臂控制 | 运动学, 协调控制 | 05-1~05-8 运动控制 |
+| 数据集 | 模仿学习, 示教学习 | 15-1~15-5 模仿学习 |
+
+### 6.2 理论到实践的映射
+
+```
+深度学习基础 ──────────────────────────────────▶ 模型训练
+    │                                              │
+    ▼                                              ▼
+CNN/ViT ──────────────────────────────────────▶ 视觉编码
+    │                                              │
+    ▼                                              ▼
+Transformer ──────────────────────────────────▶ VLM 主干
+    │                                              │
+    ▼                                              ▼
+Action Chain-of-Thought ───────────────────────▶ ACoT-VLA
+    │                                              │
+    ▼                                              ▼
+模仿学习 ──────────────────────────────────────▶ 数据集训练
+    │                                              │
+    ▼                                              ▼
+Sim2Real ──────────────────────────────────────▶ 仿真到真实
+```
+
+---
+
+## 七、优化方法
+
+### 7.1 可以优化的地方
+
+#### 🔧 优化方向 1: 数据增强
+
+```python
+# 在训练配置中添加数据增强
+data_augmentation:
+  random_camera_view: true        # 随机相机视角
+  random_light: true               # 随机光照
+  random_texture: true             # 随机纹理
+  noise_injection: true            # 噪声注入
+```
+
+#### 🔧 优化方向 2: 模型微调
+
+```python
+# 使用 LoRA 进行高效微调
+fine_tuning:
+  method: "lora"
+  lora_rank: 16
+  lora_alpha: 32
+  target_modules: ["q_proj", "v_proj"]
+```
+
+#### 🔧 优化方向 3: Prompt 工程
+
+```python
+# 优化语言指令模板
+prompt_template = """
+你是一个机器人控制专家。
+任务: {instruction}
+当前观察: 请描述你看到了什么
+可用物品: 请列出场景中的物品
+下一步行动: 基于以上信息，输出你的动作计划
+"""
+```
+
+#### 🔧 优化方向 4: 多模态融合
+
+```python
+# 融合深度信息
+multimodal_fusion:
+  rgb_encoder: true
+  depth_encoder: true
+  fusion_method: "cross_attention"  # 或 "concat"
+```
+
+### 7.2 竞赛特定技巧
+
+| 任务类型 | 技巧 | 说明 |
+|----------|------|------|
+| 物流分拣 | 目标检测优化 | 分离密集物体 |
+| 开门 | 探索策略 | 找到把手位置 |
+| 双手端锅 | 双臂协同 | 同步控制 |
+| 清理桌面 | 任务分解 | 先整理后清理 |
+
+---
+
+## 八、关键赛程
+
+| 日期 | 事项 | 状态 |
+|------|------|------|
+| **2月12日** | 比赛报名开启 | ✅ |
+| **2月28日** | 服务器开启 | ✅ 已开启 |
+| **4月20日** | 提交截止 | ⏳ 倒计时 |
+| **4月30日** | 结果公布 | ⏳ |
+| **6月1日** | 线下决赛 | ⏳ |
+
+---
+
+## 九、资源汇总
+
+### 官方资源
+
+| 资源 | 链接 |
+|------|------|
+| 竞赛主页 | https://agibot-world.com/challenge2026 |
+| Genie Sim 文档 | https://agibot-world.com/sim-evaluation/docs/ |
+| ACoT-VLA 代码 | https://github.com/AgibotTech/ACoT-VLA |
+| 数据集 (HF) | https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026 |
+| 数据集 (MS) | https://modelscope.cn/datasets/AgiBotWorld/AgiBotWorldChallenge-2026 |
+
+### 课程关联
+
+| 竞赛涉及内容 | 对应课程章节 |
+|--------------|--------------|
+| VLM 视觉语言模型 | 10-14, 10-20, 13-7 |
+| 强化学习 | 14-1, 14-2, 14-3 |
+| 仿真平台 | 07-2, 07-5 |
+| 双臂控制 | 05-5, 05-7, 11-4 |
+| 模仿学习 | 15-1, 15-2, 15-3 |
+
+### 社区支持
 
 | 平台 | 链接 |
 |------|------|
-| HuggingFace | https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026 |
-| ModelScope | https://modelscope.cn/datasets/AgiBotWorld/AgiBotWorldChallenge-2026 |
-
-每个任务包含**数百条完整操作轨迹**，高质量数据全面开源。
-
-### World Model 数据集
-
-> 🔗 https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/WorldModel
+| 飞书群 | https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b03mea0a-1212-428a-8b78-f77cf6f591e3 |
+| Discord | https://discord.gg/9UTYfReA |
+| 邮箱 | agibot-world-challenge@agibot.com |
 
 ---
 
-## 基线模型
+## 十、快速上手检查清单
 
-### Reasoning to Action 基线：ACoT-VLA
-
-帮助参赛者快速掌握训练、测试及提交流程。
-
-> 🔗 https://github.com/AgibotTech/ACoT-VLA
-
-### World Model 基线：EVAC
-
-首个由机器人动作驱动的具身世界模型。
-
-> 🔗 https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline
-
----
-
-## 关键赛程
-
-| 日期 | 事项 |
-|------|------|
-| **2月12日** | 比赛报名开启 |
-| **2月28日** | 两大赛道服务器开启 ✅ 已开启 |
-| **4月20日** | 比赛服务器关闭 |
-| **4月30日** | 线上赛段结果公布 |
-| **6月1日** | 线下真机决赛 |
-
----
-
-## 评测规则
-
-### Reasoning to Action
-
-1. **本地仿真验证**：使用 Genie Sim 3.0 进行本地闭环评估
-2. **Docker 镜像提交**：构建包含模型、代码和所有依赖项的镜像
-3. **每天提交限制**：每队每天最多 **2 次** 提交机会
-4. **服务器评测**：系统自动拉取并运行镜像进行评测
-
-### World Model
-
-1. 登录 HuggingFace 评测服务器
-2. 根据参赛指引提交结果
-3. 排行榜单实时更新
-
----
-
-## 参赛支持
-
-### 报名官网
-
-访问比赛主页获取赛事资源详情，提交训练模型，与全球开发者同台竞技：
-
-> 🔗 Reasoning to Action：https://agibot-world.com/challenge2026/reasoning2action/quick-start
-
-### 社区交流
-
-| 平台 | 链接 |
-|------|------|
-| **赛事飞书群** | https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b03mea0a-1212-428a-8b78-f77cf6f591e3 |
-| **Discord** | 加入讨论（官方频道） |
-
-### 邮箱支持
-
-技术问题、合作咨询：agibot-world-challenge@agibot.com
-
----
-
-## 快速开始
-
-### 步骤一：环境准备
-
-```bash
-# 克隆 Genie Sim 3.0
-git clone https://github.com/your-repo/genie-sim.git
-cd genie-sim
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 下载数据集
-python scripts/download_data.py --dataset Reasoning2Action-Sim
-```
-
-### 步骤二：运行基线
-
-```bash
-# 运行基线模型
-python run_baseline.py --model ACoT-VLA --task 01
-
-# 本地验证
-python evaluate.py --local --submit
-```
-
-### 步骤三：提交作品
-
-```bash
-# 构建 Docker 镜像
-docker build -t your-image:v1 .
-
-# 推送到镜像仓库
-docker push your-registry.com/your-image:v1
-
-# 在测试服务器提交
-# 访问 https://agibot-world.com/challenge2026/reasoning2action
-# 点击 New Submission 填写镜像 URL
-```
-
----
-
-## 常见问题
-
-### Q1: 是否可以使用自己的数据集？
-可以，但获奖需在技术报告中明确描述数据使用情况。
-
-### Q2: 每天提交次数有限制吗？
-是的，每队每天最多 2 次提交。建议充分本地测试后再提交。
-
-### Q3: World Model 赛道有线下赛吗？
-World Model 赛道仅设置线上竞赛阶段。Reasoning to Action 赛道有线下真机决赛。
-
-### Q4: 评测失败怎么办？
-可在 My Submissions 页面下载日志文件诊断问题。
+- [ ] 确认硬件配置（GPU ≥ RTX 4080）
+- [ ] 安装 Docker 和 NVIDIA Isaac Sim
+- [ ] 克隆 Genie Sim 代码仓库
+- [ ] 下载并配置数据集
+- [ ] 运行 select_color demo 测试环境
+- [ ] 克隆 ACoT-VLA 并理解架构
+- [ ] 启动推理服务
+- [ ] 运行完整 ICRA 任务评测
+- [ ] 构建自己的 Docker 镜像
+- [ ] 提交到测试服务器
 
 ---
 
 ## 总结
 
-AGIBOT WORLD Challenge@ICRA2026 是具身智能领域的重要竞赛：
+本课程为你提供了：
 
-- ✅ **53万美元** 总奖池 + 机器人采购代金券
-- ✅ **两大赛道**：Reasoning to Action + World Model
-- ✅ **10 个任务场景**：物流分拣、开门、双手端锅等
-- ✅ **30,000+ 条真实轨迹** 数据集
-- ✅ **Genie Sim 3.0** 开源仿真平台
-- ✅ **ACoT-VLA / EVAC** 基线模型
-- ✅ 完整的训练-测试-提交流程
+1. ✅ **知识点地图**：从 Python 到 VLA 的完整学习路径
+2. ✅ **ACoT-VLA 解析**：显式/隐式推理器 + 动作链思考
+3. ✅ **完整测试流程**：环境准备 → 数据下载 → 运行基线 → 提交
+4. ✅ **代码结构分析**：配置、训练、推理服务详解
+5. ✅ **理论知识关联**：每个模块对应的学习理论
+6. ✅ **优化方法**：数据增强、模型微调、Prompt 工程
 
----
-
-## 延伸阅读
-
-- [智元AGIBOT公众号文章](https://mp.weixin.qq.com/s/dITx3LvurBcugv1e0Ur-TQ)
-- [Genie Sim 3.0 官网](https://agibot-world.com/genie-sim)
-- [ACoT-VLA 基线模型](https://github.com/AgibotTech/ACoT-VLA)
-- [EVAC 基线模型](https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline)
-- [EWMBench 评测基准](https://github.com/AgibotTech/EWMBench)
-- [HuggingFace 评测服务器](https://huggingface.co/spaces/agibot-world/ICRA26WM)
+祝你参赛顺利！🚀
