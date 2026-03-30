@@ -2,200 +2,275 @@
 
 ## 概述
 
-AGIBOT WORLD Challenge@ICRA2026 是由智元机器人（AgiBot）举办的具身智能机器人国际竞赛，作为 ICRA 2026 的官方竞赛项目。该赛事聚焦于机器人的推理与动作预测能力，涵盖从基础到复杂的渐进式任务，是展示具身智能研究成果的重要平台。
+AGIBOT WORLD Challenge@ICRA2026 是由智元机器人（AgiBot）举办的具身智能机器人国际竞赛，作为 ICRA 2026 的官方竞赛项目。大赛以 **"即刻开赛！"** 为口号，汇聚全球顶尖团队共赴智能机器人竞技盛宴。
+
+### 赛事规模
+
+- **总奖池**：**53万美元** 💰
+- **额外福利**：表现突出的队伍将获得智元机器人采购代金券
+
+### 两大核心赛道
+
+| 赛道 | 简介 |
+|------|------|
+| **Reasoning to Action** | 推理-操作赛道，评估模型的推理和动作执行能力 |
+| **World Model** | 世界模型赛道，聚焦具身世界模型的核心能力 |
 
 ---
 
-## 赛道介绍：Reasoning to Action
+## 赛道一：Reasoning to Action（推理-操作赛道）
 
-Reasoning to Action 赛道专注于评估模型在推理和动作预测方面的能力，基于 G2 机器人、AgiBot World 开放数据集和 Genie Sim 3.0 仿真平台。该赛道旨在弥合 Sim2Real（仿真到真实）差距，实现从开放词汇理解到物理交互的稳健泛化。
+### 赛道目标
 
-### 任务类型
+本赛道旨在评估模型的推理和动作执行能力，包括：
+- **线上仿真赛段**：基于仿真平台进行模型评测
+- **线下真机赛段**：在真实机器人上验证模型性能
 
-赛道包含 **10 个渐进式挑战任务**，涵盖：
-
-| 任务类别 | 描述 |
-|----------|------|
-| 双臂协作 | 涉及多臂协同操作的基础任务 |
-| 长时序操作 | 复杂的长周期机器人操作任务 |
-| 高精度操作 | 物流分拣、办公整理、零售服务、日常生活服务等 |
+参赛者将基于 AGIBOT WORLD 开源数据集，训练能够解决一系列复杂任务的模型。
 
 ### 技术特点
 
-- **仿真平台**：Genie Sim 3.0（开源工具包）
-- **数据集**：AgiBot World 百万级高质量双臂操作数据集
-- **评测系统**：分步计算成功率，生成详细性能指标
+- 聚焦 **Sim2Real Gap（仿真到真实差距）**
+- 实现从 **开放词汇理解** 到 **真实物理交互** 的稳健泛化
+- 赛题结合落地项目与 **Genie Sim 3.0** 仿真平台设计
+- 覆盖：物流、工业、超市、餐饮、家居等常见场景
+
+### 任务示例（部分）
+
+以下是该赛道涉及的实际任务类型，通过图片展示了具体操作场景：
+
+| 任务 | 描述 |
+|------|------|
+| 物流分拣 | 机器人进行物品分类和分拣操作 |
+| 倒工件 | 将工件从一个容器倒入另一个容器 |
+| 上货并扶正倾斜商品 | 整理货架，将倾斜商品扶正 |
+| 铲爆米花 | 精细操作，模拟爆米花铲取 |
+| 开门 | 门把手操作与开门动作 |
+| 清理书桌 | 整理桌面物品 |
+| 双手端锅 | 双臂协同作业 |
+
+> 💡 左右滑动查看更多任务示例
+
+### 评测工具：Genie Sim 3.0
+
+业内首个大语言模型驱动的开源仿真平台：
+
+- **数字孪生级高保真环境**：融合三维重建与视觉生成
+- **场景、资产和任务与测试服务器保持一致**
+- 支持参赛者进行 **本地闭环评估**
+- 使用智元自研具身大脑 **Genie Reasoner**
+- 实现基于 VLM 的 **全自动评测**
+
+> 🔗 官网：https://agibot-world.com/genie-sim
 
 ---
 
-## 数据集
+## 赛道二：World Model（世界模型赛道）
 
-### Reasoning2Action 仿真数据集
+### 赛道目标
+
+聚焦具身世界模型的核心能力——**基于机器人动作精准建模物理环境动态**。
+
+参赛者需基于 AGIBOT WORLD 数据集训练 **视频生成模型**，根据所提供的机器人真实观测与动作信号，生成机器人在 **10 组真实作业场景** 下的交互视频。
+
+### 数据集
+
+| 项目 | 说明 |
+|------|------|
+| 训练集 | 10 个不同任务组成，涵盖超 **30,000 条**真实轨迹 |
+| 交互类型 | 抓取、放置、推、拉等多样化的机器人-环境交互 |
+| 测试集 | 包含专家轨迹和不完美动作轨迹（如空抓、碰撞），全面评估泛化能力 |
+
+> 🔗 数据集：https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/WorldModel
+
+### 基线模型：EVAC
+
+智元自研并开源的具身世界模型：
+
+- **首个由机器人动作驱动的具身世界模型**
+- 基于全量 AGIBOT WORLD 数据进行预训练
+
+> 🔗 基线代码：https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline
+
+### 评测基准：EWMBench
+
+基于具身世界模型评测基准 **EWMBench** 进行评估：
+
+- **图像质量**
+- **场景一致性**
+- **轨迹遵循度**
+- 多维度全方位评估生成模型表现
+
+> 🔗 评测基准：https://github.com/AgibotTech/EWMBench
+
+### 评测服务器
+
+部署在 HuggingFace 上的评测服务器，排行榜单实时更新！
+
+> 🔗 评测服务器：https://huggingface.co/spaces/agibot-world/ICRA26WM
+
+---
+
+## 数据集资源
+
+### Reasoning2Action 数据集
 
 | 平台 | 链接 |
 |------|------|
-| HuggingFace（含深度） | [数据集地址](https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/Reasoning2Action-Sim) |
-| ModelScope（含深度） | [数据集地址](https://modelscope.cn/datasets/AgibotWorld/AgiBotWorldChallenge-2026/tree/master/Reasoning2Action-Sim) |
-| HuggingFace（不含深度） | [低门槛版本](https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/Reasoning2Action-Sim) |
-| ModelScope（不含深度） | [低门槛版本](https://modelscope.cn/datasets/AgibotWorld/AgiBotWorldChallenge-2026/tree/master/Reasoning2Action-Sim) |
+| HuggingFace | https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026 |
+| ModelScope | https://modelscope.cn/datasets/AgiBotWorld/AgiBotWorldChallenge-2026 |
 
-### AgiBot World 完整数据集
+每个任务包含**数百条完整操作轨迹**，高质量数据全面开源。
 
-参与者还可使用 AgiBot World 百万级高质量数据集：
-[HuggingFace](https://huggingface.co/datasets/agibot-world/AgiBotWorld-Beta)
+### World Model 数据集
 
-### 数据使用规则
-
-- ✅ 允许使用其他公开数据集和预训练权重
-- ✅ 允许通过 Genie Sim 收集自己的数据
-- ❌ 获奖需在技术报告中明确描述数据使用情况
+> 🔗 https://huggingface.co/datasets/agibot-world/AgiBotWorldChallenge-2026/tree/main/WorldModel
 
 ---
 
-## 基线模型：ACoT-VLA
+## 基线模型
 
-主办方提供基线模型 **ACoT-VLA** 作为参考实现，帮助参赛者熟悉训练/测试/提交流程。
+### Reasoning to Action 基线：ACoT-VLA
 
-| 项目 | 链接 |
-|------|------|
-| 基线代码 | [AgibotTech/ACoT-VLA](https://github.com/AgibotTech/ACoT-VLA) |
+帮助参赛者快速掌握训练、测试及提交流程。
 
-参与者可使用自己的模型替代基线模型以获得更好的性能。
+> 🔗 https://github.com/AgibotTech/ACoT-VLA
 
----
+### World Model 基线：EVAC
 
-## 评测工具：Genie Sim 3.0
+首个由机器人动作驱动的具身世界模型。
 
-Genie Sim 3.0 是开源的仿真评测平台，提供与测试服务器对齐的场景、资产和任务。
-
-### 本地闭环评测流程
-
-1. 按照用户指南逐步运行基线模型推理和 ICRA 任务
-2. 确认 demo 成功后，集成自己的策略
-3. 在本地环境验证
-4. 提交到测试服务器参与排行榜挑战
-
-### 评测指标
-
-评测系统通过分步计算每一步的成功率来生成详细性能指标，详见竞赛空间的 Metrics 标签页。
+> 🔗 https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline
 
 ---
 
-## 提交规则
-
-### 提交格式
-
-1. 构建包含模型、代码和所有依赖项的 **Docker 镜像**
-2. 将镜像推送到公开可访问的镜像仓库
-3. 在测试服务器上提交完整镜像 URL
-
-### 提交限制
-
-- 每队每天最多 **2 次** 提交机会
-- 强烈建议在提交前通过 Genie Sim 3.0 进行充分的本地测试
-
-### 提交方式
-
-1. 点击左侧导航栏底部的 **"New Submission"** 按钮
-2. 填写镜像 URL 和相关信息
-3. 系统自动拉取并运行镜像进行评测
-
-### 查看结果
-
-- 点击 **"My Submissions"** 查看所有提交记录
-- 获取每条提交的详细评测结果
-- 评测失败时可下载日志文件诊断问题
-
----
-
-## 排行榜
-
-- 点击 **"Leaderboard"** 查看当前排名
-- 排名基于各队最高分提交计算
-- 仅团队的最高评测分数计入排名
-
-### 关键时间节点
+## 关键赛程
 
 | 日期 | 事项 |
 |------|------|
-| 4月20日 | 所有提交截止 |
-| 4月30日 | 最终在线竞赛排名公布 |
+| **2月12日** | 比赛报名开启 |
+| **2月28日** | 两大赛道服务器开启 ✅ 已开启 |
+| **4月20日** | 比赛服务器关闭 |
+| **4月30日** | 线上赛段结果公布 |
+| **6月1日** | 线下真机决赛 |
+
+---
+
+## 评测规则
+
+### Reasoning to Action
+
+1. **本地仿真验证**：使用 Genie Sim 3.0 进行本地闭环评估
+2. **Docker 镜像提交**：构建包含模型、代码和所有依赖项的镜像
+3. **每天提交限制**：每队每天最多 **2 次** 提交机会
+4. **服务器评测**：系统自动拉取并运行镜像进行评测
+
+### World Model
+
+1. 登录 HuggingFace 评测服务器
+2. 根据参赛指引提交结果
+3. 排行榜单实时更新
 
 ---
 
 ## 参赛支持
 
-### 邮箱支持
+### 报名官网
 
-技术问题、合作咨询：agibot-world-challenge@agibot.com
+访问比赛主页获取赛事资源详情，提交训练模型，与全球开发者同台竞技：
+
+> 🔗 Reasoning to Action：https://agibot-world.com/challenge2026/reasoning2action/quick-start
 
 ### 社区交流
 
 | 平台 | 链接 |
 |------|------|
-| Discord | [加入讨论](https://discord.gg/9UTYfReA) |
-| 飞书群 | [加入讨论](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=a1br0b87-830e-4f36-ad6b-a275e8ad0dc9&qr_code=true) |
+| **赛事飞书群** | https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b03mea0a-1212-428a-8b78-f77cf6f591e3 |
+| **Discord** | 加入讨论（官方频道） |
+
+### 邮箱支持
+
+技术问题、合作咨询：agibot-world-challenge@agibot.com
 
 ---
 
-## 快速开始指南
+## 快速开始
 
-### 环境准备
+### 步骤一：环境准备
 
 ```bash
-# 1. 克隆 Genie Sim 3.0
+# 克隆 Genie Sim 3.0
 git clone https://github.com/your-repo/genie-sim.git
-
-# 2. 安装依赖
 cd genie-sim
+
+# 安装依赖
 pip install -r requirements.txt
 
-# 3. 下载数据集
+# 下载数据集
 python scripts/download_data.py --dataset Reasoning2Action-Sim
 ```
 
-### 运行基线
+### 步骤二：运行基线
 
 ```bash
-# 4. 运行基线模型
+# 运行基线模型
 python run_baseline.py --model ACoT-VLA --task 01
 
-# 5. 本地验证
+# 本地验证
 python evaluate.py --local --submit
 ```
 
-### 提交作品
+### 步骤三：提交作品
 
 ```bash
-# 6. 构建 Docker 镜像
+# 构建 Docker 镜像
 docker build -t your-image:v1 .
 
-# 7. 推送到镜像仓库
+# 推送到镜像仓库
 docker push your-registry.com/your-image:v1
 
-# 8. 在测试服务器提交
+# 在测试服务器提交
 # 访问 https://agibot-world.com/challenge2026/reasoning2action
 # 点击 New Submission 填写镜像 URL
 ```
 
 ---
 
+## 常见问题
+
+### Q1: 是否可以使用自己的数据集？
+可以，但获奖需在技术报告中明确描述数据使用情况。
+
+### Q2: 每天提交次数有限制吗？
+是的，每队每天最多 2 次提交。建议充分本地测试后再提交。
+
+### Q3: World Model 赛道有线下赛吗？
+World Model 赛道仅设置线上竞赛阶段。Reasoning to Action 赛道有线下真机决赛。
+
+### Q4: 评测失败怎么办？
+可在 My Submissions 页面下载日志文件诊断问题。
+
+---
+
 ## 总结
 
-AGIBOT WORLD Challenge@ICRA2026 是具身智能领域的重要竞赛，提供了：
+AGIBOT WORLD Challenge@ICRA2026 是具身智能领域的重要竞赛：
 
-- ✅ 10 个渐进式挑战任务，涵盖双臂协作、长时序操作、高精度操作
-- ✅ 百万级高质量数据集支持
-- ✅ 开源基线模型 ACoT-VLA 和 Genie Sim 3.0 评测工具
+- ✅ **53万美元** 总奖池 + 机器人采购代金券
+- ✅ **两大赛道**：Reasoning to Action + World Model
+- ✅ **10 个任务场景**：物流分拣、开门、双手端锅等
+- ✅ **30,000+ 条真实轨迹** 数据集
+- ✅ **Genie Sim 3.0** 开源仿真平台
+- ✅ **ACoT-VLA / EVAC** 基线模型
 - ✅ 完整的训练-测试-提交流程
-- ✅ 丰富的社区支持资源
-
-本课程为你提供了完整的竞赛介绍和数据获取指南，后续课程将深入讲解具体任务攻略和获奖策略。
 
 ---
 
 ## 延伸阅读
 
-- [Genie Sim 3.0 用户指南](https://agibot-world.com/sim-evaluation/docs/#/v3?id=_35-agibot-world-challenge-reasoning-to-action-tasks-icra)
+- [智元AGIBOT公众号文章](https://mp.weixin.qq.com/s/dITx3LvurBcugv1e0Ur-TQ)
+- [Genie Sim 3.0 官网](https://agibot-world.com/genie-sim)
 - [ACoT-VLA 基线模型](https://github.com/AgibotTech/ACoT-VLA)
-- [AgiBot World 数据集](https://huggingface.co/datasets/agibot-world/AgiBotWorld-Beta)
+- [EVAC 基线模型](https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline)
+- [EWMBench 评测基准](https://github.com/AgibotTech/EWMBench)
+- [HuggingFace 评测服务器](https://huggingface.co/spaces/agibot-world/ICRA26WM)
