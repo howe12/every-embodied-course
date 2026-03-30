@@ -187,6 +187,7 @@
 
 - [20-机器人比赛](20-机器人比赛/README.md)
   - [20-1 AGIBOT WORLD Challenge@ICRA2026](20-机器人比赛/20-1-AGIBOT-WORLD-Challenge@ICRA2026.md)
+  - [20-2 ACoT-VLA 基线程序深度解析](20-机器人比赛/20-2-ACoT-VLA-基线程序深度解析.md)
 
 - [附-RDK-X5适配课程](_appendices/README.md)
   - [10-1-X RDK-X5 MIPI摄像头接入](_appendices/10-1-X-RDK-X5-MIPI摄像头接入.md)

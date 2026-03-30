@@ -5,3 +5,4 @@
 ## 课程列表
 
 - [20-1 AGIBOT WORLD Challenge@ICRA2026](20-1-AGIBOT-WORLD-Challenge@ICRA2026.md)
+- [20-2 ACoT-VLA 基线程序深度解析](20-2-ACoT-VLA-基线程序深度解析.md)
