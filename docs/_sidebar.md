@@ -185,6 +185,9 @@
   - [19-2-机械臂抓取与放置系统](19-综合项目复现/19-2-机械臂抓取与放置系统.md)
   - [19-3-多机器人协同控制系统](19-综合项目复现/19-3-多机器人协同控制系统.md)
 
+- [20-机器人比赛](20-机器人比赛/README.md)
+  - [20-1 AGIBOT WORLD Challenge@ICRA2026](20-机器人比赛/20-1-AGIBOT-WORLD-Challenge@ICRA2026.md)
+
 - [附-RDK-X5适配课程](_appendices/README.md)
   - [10-1-X RDK-X5 MIPI摄像头接入](_appendices/10-1-X-RDK-X5-MIPI摄像头接入.md)
   - [10-2-X RDK-X5 单目摄像头采集](_appendices/10-2-X-RDK-X5单目摄像头采集.md)
