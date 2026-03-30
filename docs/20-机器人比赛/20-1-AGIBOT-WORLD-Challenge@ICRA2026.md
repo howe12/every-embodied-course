@@ -63,6 +63,234 @@ AGIBOT WORLD Challenge@ICRA2026 是由智元机器人举办的具身智能国际
 
 ---
 
+## 一.5 预备知识：Docker 与基线执行环境
+
+### 什么是 Docker？为什么比赛需要它？
+
+#### 🐳 Docker 是什么？
+
+**类比理解**：想象一下，你有一个**密封的集装箱（Container）**，里面包含了：
+- 运行程序所需的所有工具（Python、CUDA、库等）
+- 程序本身
+- 程序运行的配置文件
+
+这个集装箱可以在**任何货船（电脑）**上运输，且里面货物完好无损地运行。
+
+```
+你的电脑                        │        比赛服务器
+                               │
+┌─────────────────────┐    │    ┌─────────────────────┐
+│ Python 3.10         │    │    │ Python 3.10         │
+│ CUDA 12.1           │    │    │ CUDA 12.1           │    ← 环境要完全一致！
+│ ffmpeg 4.4          │    │    │ ffmpeg 4.4          │
+│ opencv 4.9          │    │    │ opencv 4.9          │
+│ 我的模型代码         │    │    │                     │
+└─────────────────────┘    │    └─────────────────────┘
+                               │
+    如果版本不一致 → 可能出错！无法运行！
+```
+
+**Docker 的作用**：把你的整个运行环境打包，提交给服务器，服务器用完全相同的环境运行你的代码。
+
+#### 镜像 vs 容器
+
+```
+镜像（Image）    →  就像是一张蛋糕的模具模板
+容器（Container）→  用模具实际做出的蛋糕
+
+你可以用同一个镜像创建多个独立运行的容器
+```
+
+---
+
+### 完整基线执行流程
+
+#### 流程总览
+
+```
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+│ Step 1  │───▶│ Step 2  │───▶│ Step 3  │───▶│ Step 4  │───▶│ Step 5  │
+│ 安装    │    │ 克隆    │    │ 构建    │    │ 运行    │    │ 提交    │
+│ Docker  │    │ 代码    │    │ 镜像    │    │ 基线    │    │ 模型    │
+└─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
+```
+
+---
+
+#### Step 1: 安装 Docker
+
+**含义**：在你的电脑上安装一个"集装箱管理器"
+
+```bash
+# 安装 Docker（Ubuntu/Debian）
+sudo apt update
+sudo apt install docker.io
+
+# 启动 Docker 服务
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 把你自己加入 docker 组（这样不用每次都 sudo）
+sudo usermod -aG docker $USER
+newgrp docker  # 生效后重新登录
+```
+
+**为什么需要**：Docker 是让代码在服务器上运行的唯一方式。服务器不认识 Python 脚本，只认识 Docker 镜像。
+
+---
+
+#### Step 2: 克隆基线代码
+
+**含义**：把官方提供的"作业参考"下载到你的电脑
+
+```bash
+# 克隆 ACoT-VLA 基线（赛道一）
+git clone https://github.com/AgibotTech/ACoT-VLA.git
+cd ACoT-VLA
+
+# 或克隆 EVAC 基线（赛道二）
+git clone https://github.com/AgibotTech/AgiBotWorldChallengeICRA2026-WorldModelBaseline.git
+cd AgiBotWorldChallengeICRA2026-WorldModelBaseline
+```
+
+**文件结构示例**：
+```
+ACoT-VLA/
+├── src/                    # 源代码
+│   └── openpi/            # 主要程序
+├── scripts/               # 运行脚本
+├── configs/               # 配置文件
+├── README.md              # 说明文档
+└── dockerfile             # Docker 构建配方
+```
+
+---
+
+#### Step 3: 构建 Docker 镜像
+
+**含义**：根据官方提供的"配方"，在本地构建一个完整的运行环境
+
+```bash
+# 进入项目目录
+cd ACoT-VLA
+
+# 构建镜像（约10-30分钟，取决于网速）
+docker build -f ./scripts/dockerfile -t registry.agibot.com/genie-sim/open_source:latest .
+```
+
+**"镜像" 就像是一张照片**：一旦拍好（构建完成），就可以无限复制使用。
+
+---
+
+#### Step 4: 启动 Docker 容器
+
+**含义**：让你的代码在"集装箱"里运行
+
+```bash
+# 启动一个交互式容器
+./scripts/start_gui.sh
+
+# 进入容器（另开一个终端）
+./scripts/into.sh
+
+# 现在你已经在容器内部了
+# 所有命令都在这个隔离环境里运行
+```
+
+**容器内部示意**：
+```
+┌─────────────────────────────────────┐
+│         Docker 容器内部              │
+│                                     │
+│  (base) user@container:~$          │  ← 命令行提示符
+│                                     │
+│  # 这里运行的所有程序都是隔离的       │
+│  # 安装的库不会影响你的真实电脑       │
+│  # 退出容器后，这些改动会消失         │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+---
+
+#### Step 5: 运行基线
+
+##### 赛道一（ACoT-VLA）- 启动推理服务
+
+```bash
+# 在容器内
+cd openpi
+
+# 启动推理服务（占用 8999 端口）
+uv run scripts/serve_policy.py --host='0.0.0.0' --port=8999 \
+    policy:checkpoint \
+    --policy.config=acot_icra_simulation_challenge_reasoning_to_action \
+    --policy.dir ./checkpoints/select_color/29999
+
+# 看到类似输出说明成功：
+# INFO:websockets.server:server listening on 0.0.0.0:8999
+```
+
+##### 赛道二（EVAC）- 运行推理
+
+```bash
+# 在容器内
+cd AgiBotWorldChallengeICRA2026-WorldModelBaseline
+
+# 修改 scripts/infer.sh 中的路径后运行
+bash scripts/infer.sh
+
+# 输出目录: ACWM_dataset/
+```
+
+---
+
+#### Step 6: 提交模型
+
+**含义**：把你修改后的容器打包，上传到服务器
+
+```bash
+# 1. 打包你的容器
+docker commit <container_id> your-registry.com/your-project:v1
+
+# 2. 推送到公开仓库
+docker push your-registry.com/your-project:v1
+
+# 3. 在比赛网站提交镜像 URL
+# https://agibot-world.com/challenge2026/reasoning2action
+```
+
+---
+
+### 流程总结表
+
+| 步骤 | 命令 | 含义 | 耗时 |
+|------|------|------|------|
+| 1. 安装 Docker | `apt install docker.io` | 安装集装箱管理器 | 5分钟 |
+| 2. 克隆代码 | `git clone ...` | 下载官方基线 | 2分钟 |
+| 3. 构建镜像 | `docker build ...` | 制作运行环境 | 10-30分钟 |
+| 4. 启动容器 | `./scripts/start_gui.sh` | 进入隔离环境 | 1分钟 |
+| 5. 运行基线 | `uv run scripts/...` | 测试/训练 | 可变 |
+| 6. 提交模型 | `docker push ...` | 上传作品 | 5分钟 |
+
+---
+
+### 常见问题 FAQ
+
+#### Q: Docker 占用多少空间？
+A: 每个镜像约 5-20 GB，容器运行时会额外占用内存。
+
+#### Q: 容器退出后代码还在吗？
+A: 代码在宿主机上，容器只是运行环境。但如果你在容器内修改了代码，需要先 `docker commit` 保存。
+
+#### Q: 可以同时运行多个容器吗？
+A: 可以，每个容器是独立的环境。
+
+#### Q: 报错 "permission denied"？
+A: 运行 `sudo usermod -aG docker $USER` 然后重新登录。
+
+---
+
 ## 二、知识点地图：从零到参赛
 
 ### 2.1 学习路径图
