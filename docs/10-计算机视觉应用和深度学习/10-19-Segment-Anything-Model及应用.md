@@ -2676,3 +2676,333 @@ SAM 团队开发了**数据引擎**（Data Engine）实现数据迭代：
 | Grounding DINO | <https://github.com/IDEA-Research/GroundingDINO> |
 ---
 *更新于 2026-04-06*
+---
+
+## 9B. 实战补充：SAM + 深度估计结合应用
+
+> **补充说明**：本节参考 Datawhale 的实践方案，实现 SAM 分割与单目深度估计的结合应用，让机器人不仅能"看清"物体轮廓，还能知道物体"在哪里"（距离）。
+
+### 9B.1 为什么需要结合SAM与深度估计？
+
+单纯的分割或单纯的深度图都有局限性，两者结合是实现 **3D物体感知** 的关键：
+
+| 模态 | 效果 | 局限性 |
+|------|------|--------|
+| **仅 SAM** | 清晰物体轮廓 | 无距离感，无法规划抓取 |
+| **仅 深度** | 模糊的距离信息 | 无物体概念，边缘模糊 |
+| **SAM + 深度** | **轮廓 + 距离** | 互补增强 |
+
+### 9B.2 环境配置
+
+```bash
+# 1. 下载 SAM ViT-H 模型权重（约2.4GB）
+wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
+
+# 2. 安装依赖
+pip install segment-anything transformers opencv-python matplotlib torch torchvision
+```
+
+### 9B.3 交互式实战：点击分割与测距
+
+**功能**：加载图片 → 鼠标点击物体 → 实时生成Mask → 融合深度图计算该物体的平均距离
+
+```python
+import numpy as np
+import torch
+import cv2
+import matplotlib.pyplot as plt
+from segment_anything import sam_model_registry, SamPredictor
+from transformers import DPTImageProcessor, DPTForDepthEstimation
+from PIL import Image
+import os
+
+# --- 配置 ---
+SAM_CHECKPOINT = "sam_vit_h_4b8939.pth"
+MODEL_TYPE = "vit_h"
+DEPTH_MODEL_NAME = "Intel/dpt-large"
+IMAGE_PATH = "test_image.jpg"  # 替换为你的本地图片路径
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Running on device: {device}")
+
+# --- 1. 模型加载 ---
+print("Loading Depth Model...")
+depth_processor = DPTImageProcessor.from_pretrained(DEPTH_MODEL_NAME)
+depth_model = DPTForDepthEstimation.from_pretrained(DEPTH_MODEL_NAME).to(device)
+depth_model.eval()
+
+print("Loading SAM Model...")
+if not os.path.exists(SAM_CHECKPOINT):
+    raise FileNotFoundError(f"SAM checkpoint not found at {SAM_CHECKPOINT}.")
+sam = sam_model_registry[MODEL_TYPE](checkpoint=SAM_CHECKPOINT)
+sam.to(device=device)
+predictor = SamPredictor(sam)
+
+# --- 2. 核心处理函数 ---
+def get_depth_map(image_pil):
+    """生成全图的相对深度图"""
+    inputs = depth_processor(images=image_pil, return_tensors="pt").to(device)
+    with torch.no_grad():
+        outputs = depth_model(**inputs)
+        predicted_depth = outputs.predicted_depth
+    
+    # 插值到原图尺寸
+    prediction = torch.nn.functional.interpolate(
+        predicted_depth.unsqueeze(1),
+        size=image_pil.size[::-1],
+        mode="bicubic",
+        align_corners=False,
+    )
+    return prediction.squeeze().cpu().numpy()
+
+# --- 3. 交互逻辑 ---
+def interactive_demo():
+    # 读取图像
+    if not os.path.exists(IMAGE_PATH):
+        print(f"Error: Image {IMAGE_PATH} not found.")
+        return
+
+    image_cv = cv2.imread(IMAGE_PATH)
+    image_cv = cv2.resize(image_cv, (1024, int(1024 * image_cv.shape[0] / image_cv.shape[1])))
+    image_rgb = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
+    image_pil = Image.fromarray(image_rgb)
+    
+    # 预计算深度图
+    print("Computing depth map...")
+    depth_map = get_depth_map(image_pil)
+    
+    # 初始化 SAM
+    print("Setting image for SAM...")
+    predictor.set_image(image_rgb)
+
+    # 状态变量
+    input_point = []
+    input_label = []
+    current_mask = None
+    
+    print("\n--- 操作指南 ---")
+    print("左键: 点击选择物体 (前景)")
+    print("右键: 点击排除区域 (背景)")
+    print("R键: 重置选择")
+    print("Q键: 退出")
+
+    def mouse_callback(event, x, y, flags, param):
+        nonlocal input_point, input_label, current_mask
+        
+        if event == cv2.EVENT_LBUTTONDOWN:
+            input_point.append([x, y])
+            input_label.append(1)  # 1 表示前景
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            input_point.append([x, y])
+            input_label.append(0)  # 0 表示背景
+        else:
+            return
+
+        # 调用 SAM 预测
+        masks, scores, _ = predictor.predict(
+            point_coords=np.array(input_point),
+            point_labels=np.array(input_label),
+            multimask_output=False
+        )
+        current_mask = masks[0]
+        
+        # 计算深度统计
+        masked_depth = depth_map[current_mask]
+        if masked_depth.size > 0:
+            avg_depth = np.mean(masked_depth)
+            print(f"物体距离 -> 平均: {avg_depth:.4f} (置信度: {scores[0]:.3f})")
+
+    cv2.namedWindow("SAM + Depth Interaction", cv2.WINDOW_NORMAL)
+    cv2.setMouseCallback("SAM + Depth Interaction", mouse_callback)
+
+    while True:
+        display_img = image_cv.copy()
+
+        # 绘制点击点
+        for pt, label in zip(input_point, input_label):
+            color = (0, 255, 0) if label == 1 else (0, 0, 255)
+            cv2.circle(display_img, tuple(pt), 5, color, -1)
+
+        # 绘制 Mask 叠加
+        if current_mask is not None:
+            colored_mask = np.zeros_like(display_img)
+            colored_mask[current_mask] = [0, 0, 255]
+            display_img = cv2.addWeighted(display_img, 1, colored_mask, 0.5, 0)
+            
+            # 绘制轮廓
+            contours, _ = cv2.findContours(current_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(display_img, contours, -1, (255, 255, 255), 2)
+
+        cv2.imshow("SAM + Depth Interaction", display_img)
+        
+        key = cv2.waitKey(50) & 0xFF
+        if key == ord('q'):
+            break
+        elif key == ord('r'):
+            input_point = []
+            input_label = []
+            current_mask = None
+            print("已重置.")
+
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    interactive_demo()
+```
+
+### 9B.4 批处理脚本（自动分割+深度估计）
+
+如果有一批图片需要自动处理，使用以下脚本：
+
+```python
+import torch
+import numpy as np
+from PIL import Image
+import matplotlib.pyplot as plt
+import os
+from transformers import DPTImageProcessor, DPTForDepthEstimation
+from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"使用设备: {device}")
+
+# --- 辅助函数：显示并保存结果 ---
+def save_visualization(image, mask_or_depth, mode="sam", output_name="output.png"):
+    plt.figure(figsize=(12, 8))
+    
+    if mode == "depth":
+        plt.subplot(1, 2, 1)
+        plt.imshow(image)
+        plt.title("Original Image")
+        plt.axis('off')
+        
+        plt.subplot(1, 2, 2)
+        plt.imshow(mask_or_depth, cmap="inferno")
+        plt.colorbar(label="Relative Depth")
+        plt.title("Depth Estimation")
+        plt.axis('off')
+
+    elif mode == "sam":
+        plt.imshow(image)
+        ax = plt.gca()
+        ax.set_autoscale_on(False)
+        
+        # 按面积排序，大的在下，小的在上
+        sorted_anns = sorted(mask_or_depth, key=(lambda x: x['area']), reverse=True)
+        
+        img_overlay = np.ones((sorted_anns[0]['segmentation'].shape[0], 
+                              sorted_anns[0]['segmentation'].shape[1], 4))
+        img_overlay[:,:,3] = 0
+        
+        for ann in sorted_anns:
+            m = ann['segmentation']
+            color_mask = np.concatenate([np.random.random(3), [0.4]])
+            img_overlay[m] = color_mask
+        ax.imshow(img_overlay)
+        plt.title("SAM Segmentation")
+        plt.axis('off')
+    
+    plt.savefig(output_name, bbox_inches='tight')
+    plt.close()
+    print(f"结果已保存至: {output_name}")
+
+def main():
+    # 1. 路径设置
+    rgb_path = "test_image.jpg"
+    sam_ckpt = "sam_vit_h_4b8939.pth"
+    
+    if not os.path.exists(rgb_path):
+        print(f"错误: 找不到图片 {rgb_path}")
+        return
+
+    image_pil = Image.open(rgb_path).convert("RGB")
+    image_np = np.array(image_pil)
+
+    # --- 任务1: 深度估计 ---
+    print("\n--- [1/2] 正在运行深度估计 ---")
+    try:
+        depth_processor = DPTImageProcessor.from_pretrained("Intel/dpt-large")
+        depth_model = DPTForDepthEstimation.from_pretrained("Intel/dpt-large").to(device)
+        
+        inputs = depth_processor(images=image_pil, return_tensors="pt").to(device)
+        with torch.no_grad():
+            outputs = depth_model(**inputs)
+            predicted_depth = outputs.predicted_depth
+            
+        prediction = torch.nn.functional.interpolate(
+            predicted_depth.unsqueeze(1),
+            size=image_pil.size[::-1],
+            mode="bicubic",
+            align_corners=False,
+        ).squeeze().cpu().numpy()
+        
+        save_visualization(image_np, prediction, mode="depth", output_name="result_01_depth.png")
+    except Exception as e:
+        print(f"深度估计失败: {e}")
+
+    # --- 任务2: SAM 全图分割 ---
+    print("\n--- [2/2] 正在运行 SAM 分割 ---")
+    if os.path.exists(sam_ckpt):
+        try:
+            sam = sam_model_registry["vit_h"](checkpoint=sam_ckpt).to(device)
+            mask_generator = SamAutomaticMaskGenerator(sam)
+            masks = mask_generator.generate(image_np)
+            save_visualization(image_np, masks, mode="sam", output_name="result_02_sam_seg.png")
+        except Exception as e:
+            print(f"SAM 分割失败: {e}")
+    else:
+        print(f"跳过 SAM: 未找到权重文件 {sam_ckpt}")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 9B.5 深度估计原理解释
+
+我们使用 **DPT (Dense Prediction Transformer)** 进行单目深度估计：
+
+**原理**：单目相机无法像双目那样通过视差计算深度，DPT 学习了"上下文线索"：
+- **遮挡关系**：物体A挡住物体B → A更近
+- **透视关系**：道路远端汇聚成一点
+- **相对大小**：同样是人，看着小的离得远
+
+> **⚠️ 关于深度图颜色的反直觉现象**
+> 深度图中**越近的物体颜色越亮（数值越大）**，越远的地方颜色越黑（数值越小）。
+> - 这是因为模型输出的是 **"逆深度" (Inverse Depth, 1/distance)**
+> - **天空/远山**：距离无穷远 → 1/∞ ≈ 0 → **黑色**
+> - **近处物体**：距离很小 → 数值大 → **高亮**
+> - **记忆口诀**：**"越亮越近，越黑越远"**
+
+### 9B.6 机器人应用拓展
+
+结合 ROS2，可以实现：
+
+```python
+# ROS2 中使用 SAM + 深度估计
+# 订阅相机图像话题
+# 发布分割掩膜话题
+# 结合深度相机计算物体3D位置
+
+# 示例：计算物体3D质心
+def get_3d_position(mask, depth_map, camera_intrinsics):
+    """计算分割物体的3D质心位置"""
+    ys, xs = np.where(mask)
+    if len(xs) == 0:
+        return None
+    
+    # 计算2D质心
+    cx, cy = np.mean(xs), np.mean(ys)
+    
+    # 获取深度
+    z = depth_map[int(cy), int(cx)]
+    
+    # 反投影到3D
+    fx, fy = camera_intrinsics['fx'], camera_intrinsics['fy']
+    cx0, cy0 = camera_intrinsics['cx'], camera_intrinsics['cy']
+    
+    X = (cx - cx0) * z / fx
+    Y = (cy - cy0) * z / fy
+    Z = z
+    
+    return (X, Y, Z)
+```
