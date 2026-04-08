@@ -157,6 +157,7 @@
   - [16-8-SmolVLA实践](16-VLA%20大模型/16-8-SmolVLA-实践.md)
   - [16-9-Generalist Gen0 模型解析](16-VLA%20大模型/16-9-Generalist-Gen0模型解析.md)
   - [16-10-Generalist Gen1 模型解析](16-VLA%20大模型/16-10-Generalist-Gen1模型解析.md)
+  - [16-11-具身智能技术路线全梳理](16-VLA%20大模型/16-11-具身智能技术路线全梳理.md)
 
 - [17-VLN大模型](17-VLN大模型/README.md)
   - [17-1-VLN基础介绍](17-VLN大模型/17-1-VLN基础介绍.md)
