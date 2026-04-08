@@ -195,6 +195,7 @@
   - [20-2 ACoT-VLA 基线程序深度解析](20-机器人比赛/20-2-ACoT-VLA-基线程序深度解析.md)
   - [20-3-World Model赛道-EVAC模型学习指南](20-机器人比赛/20-3-World-Model赛道-EVAC模型学习指南.md)
   - [20-4-World Model赛道-完整教程](20-机器人比赛/20-4-World-Model赛道-完整教程.md)
+  - [20-5-World Model赛道-环境部署教程](20-机器人比赛/20-5-World-Model赛道-环境部署教程.md)
 
 - [附-RDK-X5适配课程](_appendices/README.md)
   - [10-1-X RDK-X5 MIPI摄像头接入](_appendices/10-1-X-RDK-X5-MIPI摄像头接入.md)
